@@ -21,6 +21,7 @@ vendor/chartjs-adapter-*.js    its date adapter (MIT), vendored
 vendor/SHA256SUMS              checksum pin for both of the above
 tools/validate-data.mjs        CI data validator, zero dependencies
 .github/workflows/ci.yml       the only CI
+.github/scripts/               CI-only helpers, zero dependencies
 LICENSE / LICENSE-DATA         MIT for code, CC BY 4.0 for the data
 ```
 
@@ -62,7 +63,7 @@ against the CSV precisely because nothing else would notice.
 
 ## CI
 
-`.github/workflows/ci.yml`, two jobs:
+`.github/workflows/ci.yml`, three jobs:
 
 - **`check`** gates merges. `node tools/validate-data.mjs`, then
   `sha256sum -c vendor/SHA256SUMS`, then `npx html-validate index.html`. All
@@ -71,6 +72,16 @@ against the CSV precisely because nothing else would notice.
   merge gate. External link checking depends on other people's servers being
   reachable and willing, so it fails for reasons unrelated to the change under
   review, and gating merges on it teaches people to ignore red.
+- **`a11y`** is advisory for a different reason: it grades the page as it
+  stands, not the change under review, so it was already red the day it was
+  added. It serves the page and runs axe-core against the `http://` URL —
+  never the file, because `fetch()` is blocked over `file://` and an auditor
+  pointed at the file grades the error banner and reports almost nothing.
+  A step before the audit asserts the dashboard actually rendered (stat tiles
+  present, chart canvas sized by Chart.js, error banner still hidden) so a
+  silent data failure cannot masquerade as a clean audit. Findings go to the
+  run summary via `.github/scripts/a11y-summary.mjs`. Promote it to a gate once
+  what it reports is fixed.
 
 **The link job accepts HTTP 403 as alive.** `index.html` cites
 `doi:10.1002/jae.3104`, which resolves to `onlinelibrary.wiley.com`, and Wiley
