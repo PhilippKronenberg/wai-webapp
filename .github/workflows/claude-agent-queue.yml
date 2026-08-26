@@ -1,0 +1,182 @@
+name: Claude Agent Queue
+
+# Works the issue queue unattended, one issue per run.
+#
+# Queue state lives entirely in GitHub labels, because a runner keeps nothing
+# between runs -- every run starts with zero context and rebuilds it from the
+# repository and the issue:
+#
+#   agent-ready    you queued it; the agent may pick it up
+#   agent-working  claimed by a run in flight (a stale claim is reclaimable)
+#   agent-done     a pull request is open for it
+#   agent-blocked  the agent stopped and wants a human
+#
+# Two triggers, covering each other's gap: `labeled` starts a run the moment you
+# queue something, and the cron drains whatever is left -- which is also the only
+# retry mechanism there is. A run killed midway (usually by exhausting the
+# subscription quota) leaves its `agent-working` claim behind; the next cron fire
+# reclaims it once the quota window has reset.
+#
+# Ported from mfbdfm, with its R toolchain removed. That is not only a
+# simplification: there, R/pandoc/dependency setup runs *before* the agent looks
+# at the queue, so every idle cron fire costs about three minutes doing nothing.
+# Here an idle fire is checkout plus Node, and costs seconds.
+
+on:
+  issues:
+    types: [labeled]
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Issue number to work (optional; otherwise takes the next queued one)"
+        required: false
+        type: string
+
+# One agent at a time. `cancel-in-progress: false` matters: a scheduled fire must
+# not kill a run already working an issue. GitHub keeps at most one *pending* run
+# per group, so fires that arrive during a long run collapse into a single
+# follow-up rather than piling up.
+concurrency:
+  group: claude-agent-queue
+  cancel-in-progress: false
+
+jobs:
+  agent:
+    # On a `labeled` event only the queue label starts a run. Cron and manual
+    # dispatch carry no label at all, so they fall through to the queue lookup.
+    if: github.event_name != 'issues' || github.event.label.name == 'agent-ready'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write        # push the issue branch
+      issues: write          # move labels, comment results
+      pull-requests: write   # open the PR
+      id-token: write        # required for the action's GitHub App auth
+      actions: read          # let the agent read CI results
+      # Do NOT add `workflows: write` here. It is not a valid permissions key --
+      # GitHub rejects the whole file with "Unexpected value 'workflows'", the
+      # workflow stops parsing, and every trigger silently stops firing. The file
+      # still parses as YAML, so a local yaml check will not catch it; the
+      # signature is a run that fails in 0s and a workflow whose display name
+      # degrades to its file path. Pushing files under .github/workflows/ is
+      # governed by the GitHub App installation's own Workflows permission and
+      # cannot be granted from here at all.
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0     # full history: the agent inspects it for conventions
+
+      # Node only. The validator the agent must pass uses Node built-ins, and
+      # html-validate is fetched by npx at run time -- this repository has no
+      # build step and no node_modules, and CI must not introduce one.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          # Authenticates against the Claude subscription rather than a metered
+          # API key. Generate with `claude setup-token` and store as a secret.
+          # Secrets do not cross repositories: this is wai-webapp's own.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # `github_token` is deliberately NOT set here. Left unset, the action
+          # authenticates as the Claude GitHub App, and GitHub fires ci.yml on the
+          # pull requests it opens. Passing `secrets.GITHUB_TOKEN` instead would
+          # silently suppress that CI -- GitHub does not trigger workflows on
+          # commits made with the default token -- and the checks this project
+          # gates merges on would never run.
+          claude_args: |
+            --model claude-opus-5
+            --max-turns 60
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep"
+
+          prompt: |
+            You are working this repository's issue queue, unattended, inside a
+            GitHub Actions runner. Work EXACTLY ONE issue and then stop. Do not
+            start a second one, however easy the next one looks -- one issue per
+            run is what keeps a run that dies on quota cheap to redo.
+
+            ## 1. Pick the issue
+
+            This run was triggered by: ${{ github.event_name }}
+            Issue named by the trigger (empty if none): ${{ github.event.issue.number || inputs.issue }}
+
+            If that number is non-empty, work that issue. Otherwise choose one:
+
+              a. the oldest open issue labelled `agent-ready` and not labelled
+                 `agent-working`; failing that,
+              b. a stale claim -- an open issue labelled `agent-working` whose
+                 label was applied more than 6 hours ago. A previous run died
+                 mid-flight and the claim needs reclaiming. `gh issue view` does
+                 not carry label timestamps; read them from the timeline, e.g.
+                 `gh api repos/${{ github.repository }}/issues/<N>/timeline
+                 --jq '.[] | select(.event=="labeled") | [.created_at,.label.name]'`.
+
+            If neither exists, do nothing at all, comment nothing, and exit
+            successfully. An idle queue is the normal state, not a failure.
+
+            ## 2. Claim it
+
+            Before any other work: add `agent-working` and remove `agent-ready`.
+            Claiming first is what stops a concurrent run taking the same issue.
+
+            ## 3. Do the work
+
+            Read CLAUDE.md at the repository root FIRST and follow it. It is the
+            source of truth for this project's conventions and it records several
+            constraints that look like omissions and are deliberate -- the absent
+            build step, Chart.js being vendored rather than CDN-loaded, and the
+            palette being defined three times for light, system-dark and the
+            theme toggle.
+
+            - `git fetch origin`, fast-forward `main`, then cut
+              `issue-<N>-<short-slug>` off it. Never commit to `main`.
+            - Make the change, kept to the scope the issue actually asks for.
+              Do not widen it because you noticed something else nearby.
+            - Do not add dependencies. No npm, no bundler, no framework.
+
+            ## 4. Verify -- this gate is not optional
+
+            Run the same checks CI runs, from the repository root:
+
+                node tools/validate-data.mjs
+                sha256sum -c vendor/SHA256SUMS
+                npx --yes html-validate index.html
+
+            All three must pass. If you cannot get them to pass, do NOT open a
+            pull request -- go to section 6.
+
+            If you changed anything visual, say plainly in your issue comment
+            that you could not see it rendered, and what specifically a human
+            should look at. You have no browser here.
+
+            ## 5. Ship it
+
+            - Commit, ending the message with `Closes #<N>` and
+              `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
+              For an issue that is a running list rather than a single task --
+              #5, the design list -- use `Refs #<N>` instead, so it stays open.
+            - Push the branch and open a pull request into `main`.
+            - NEVER merge it and never push to `main`. A human reviews every
+              change; opening the PR is where your authority ends. This
+              repository publishes straight to a live public dashboard from
+              `main`, so an unreviewed merge is visible to the world immediately.
+            - Comment on the issue with what changed, the PR link, and anything
+              that turned out differently from what the issue assumed. Report
+              this faithfully -- if you fixed part of it, say which part. Do not
+              present a partial fix as a complete one.
+            - Swap the labels: remove `agent-working`, add `agent-done`.
+
+            ## 6. If you get stuck
+
+            Blocked, out of scope, needs a judgement call only a human should
+            make, or the checks will not pass: comment on the issue saying
+            precisely where you stopped and what you tried, remove
+            `agent-working`, add `agent-blocked`, and exit.
+
+            Do NOT restore `agent-ready`. That would send the next scheduled run
+            into the same dead end six hours later, and every six hours after
+            that. `agent-blocked` is a request for a human to look.
