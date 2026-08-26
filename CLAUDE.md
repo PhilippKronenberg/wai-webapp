@@ -1,0 +1,139 @@
+# CLAUDE.md
+
+Guidance for Claude Code (claude.ai/code) working in this repository.
+
+## What this is
+
+A public dashboard for the **Weekly Activity Index (WAI)**, a high-frequency
+indicator of Swiss GDP growth. Published at
+<https://philippkronenberg.github.io/wai-webapp/>.
+
+It is a static page and the data it reads. **No build step, no server, no
+framework, no `node_modules`.** `index.html` is opened directly by the browser,
+fetches one CSV, and draws it.
+
+```
+index.html                     the entire application
+wai_data.csv                   the entire data layer
+wai_meta.json                  run metadata (drives the "as of" line)
+vendor/chart.umd.js            Chart.js 4.4.0 (MIT), vendored
+vendor/chartjs-adapter-*.js    its date adapter (MIT), vendored
+vendor/SHA256SUMS              checksum pin for both of the above
+tools/validate-data.mjs        CI data validator, zero dependencies
+.github/workflows/ci.yml       the only CI
+LICENSE / LICENSE-DATA         MIT for code, CC BY 4.0 for the data
+```
+
+The numbers come from the [`mfbdfm`](https://github.com/PhilippKronenberg/mfbdfm)
+R package — specifically `export_wai_web()`. **This page performs no estimation
+of its own.** If a number looks wrong, the bug is almost certainly upstream in
+mfbdfm, not here.
+
+## Constraints to defend, not fix
+
+These look like omissions and are not. Each was chosen.
+
+- **No build step.** Do not introduce npm, a bundler, TypeScript, or a
+  framework. The whole point is that the page is deployable as a free static
+  site with nothing between the source and what the browser runs.
+- **Chart.js is vendored, not loaded from a CDN.** This is a supply-chain
+  decision: a CDN can change what it serves. `vendor/SHA256SUMS` pins the exact
+  bytes and CI verifies them. Do not "modernise" this into a `<script
+  src="https://cdn...">`.
+- **`tools/validate-data.mjs` uses Node built-ins only.** CI must not be the
+  thing that introduces a dependency into a repository that deliberately has
+  none. `html-validate` is fetched by `npx` at run time for the same reason —
+  it is never declared as a dependency.
+- **`wai_data.csv` is a public interface.** People download it and the page
+  links it. Its column names and `YYYY-MM-DD` date format are not free to
+  change; changing them breaks other people's scripts silently.
+
+## The data contract
+
+`wai_meta.json` has more fields than the page uses. **`index.html` reads exactly
+four**: `vintage_date`, `run_timestamp`, `mfbdfm_version`, `columns`. Removing
+one of those breaks the page.
+
+The rest — `n_obs`, `first_obs_date`, `last_obs_date`, `latest_wai_qoq`,
+`latest_wai_yoy`, `latest_index` — restate facts derivable from the CSV and are
+read by nobody. They can therefore drift out of agreement with the data while
+the page still looks entirely correct. `tools/validate-data.mjs` checks them
+against the CSV precisely because nothing else would notice.
+
+## CI
+
+`.github/workflows/ci.yml`, two jobs:
+
+- **`check`** gates merges. `node tools/validate-data.mjs`, then
+  `sha256sum -c vendor/SHA256SUMS`, then `npx html-validate index.html`. All
+  deterministic, all fast (~11s total).
+- **`links`** is advisory (`continue-on-error: true`) and deliberately **not** a
+  merge gate. External link checking depends on other people's servers being
+  reachable and willing, so it fails for reasons unrelated to the change under
+  review, and gating merges on it teaches people to ignore red.
+
+**The link job accepts HTTP 403 as alive.** `index.html` cites
+`doi:10.1002/jae.3104`, which resolves to `onlinelibrary.wiley.com`, and Wiley
+returns 403 to any non-browser client including one sending a full desktop user
+agent. That is bot protection, not a dead link. Do not "fix" it by removing the
+DOI.
+
+## Traps that have already cost time
+
+- **Line endings vs the checksum pin.** `vendor/**` is marked `-text` in
+  `.gitattributes` so git never converts its line endings. Without that, a
+  Windows checkout of `chart.umd.js` is 204962 bytes where the stored blob is
+  204948 — 14 carriage returns — and `sha256sum -c` fails on a file nobody
+  touched. If you regenerate the checksums, do it from a checkout with LF, or
+  read them off a CI run. `vendor/SHA256SUMS` is itself pinned to `eol=lf`,
+  because `sha256sum -c` splits on exact bytes and a trailing CR joins the
+  filename.
+- **The palette is defined three times.** `index.html` has a light `:root`, a
+  `@media (prefers-color-scheme: dark)` override, and a `:root[data-theme="dark"]`
+  block for the theme toggle. A colour written directly into a rule applies to
+  one of the three and looks broken in the other two. **Add colours as tokens,
+  in all three blocks.** Dark mode needs its own values, not the light ones:
+  the brand `#173f47` sinks into a `#121211` page and `#276873` title text
+  falls below WCAG AA against it, so dark uses lifted variants of the same hue.
+- **The legend is hand-built.** Chart.js's own legend is disabled
+  (`legend: { display: false }`); the visible one is
+  `<div class="legend" id="legend">` populated by `renderLegend()`. Moving or
+  restyling it is a markup/CSS change, never a Chart.js options change.
+- **`fetch()` does not work over `file://`.** Opening `index.html` by
+  double-clicking shows an error banner, not the dashboard, because the browser
+  blocks the CSV and JSON fetches. To preview locally, serve it:
+  `python -m http.server 8787 --bind 127.0.0.1` and open
+  <http://127.0.0.1:8787/>.
+
+## Deployment
+
+GitHub Pages, built from `main` (not `gh-pages`). A merge to `main` triggers
+`pages-build-deployment` automatically; there is no deploy workflow to maintain.
+
+**Toggling the repository private and back to public silently disables Pages,
+and it does not come back on its own.** This happened to mfbdfm: its `gh-pages`
+branch stayed populated by months of deploys while the site returned 404, and
+this dashboard linked to the dead URL. Re-enable under Settings → Pages.
+
+## Cost
+
+Public repository, standard GitHub-hosted runners, so **Actions minutes are
+free** — the monthly allowance is drawn down only by private repositories. Any
+Claude automation must authenticate with `claude_code_oauth_token` against the
+subscription, never `anthropic_api_key`, which bills metered API credit.
+
+Both properties depend on the repository staying public. Larger runners bill
+even on public repos, so do not switch a job to one.
+
+## Conventions
+
+- **Issue-driven, branch per issue.** Every change gets an issue, a short-lived
+  branch off an up-to-date `main`, and a PR. Never commit to `main`.
+- Commit messages end with `Closes #N` and a `Co-Authored-By:` line.
+- **Design changes go to the running design issue** rather than getting their
+  own — see #5, which stays open as the accumulating list.
+- After editing any workflow, run `gh workflow list` and confirm it still shows
+  the workflow's real name. A workflow file can be valid YAML and still be
+  rejected by GitHub's schema, and the failure is silent: no trigger fires, and
+  the only signs are a run that fails in 0s and a display name that has quietly
+  become a file path.
