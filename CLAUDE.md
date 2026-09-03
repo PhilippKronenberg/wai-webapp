@@ -136,6 +136,49 @@ subscription, never `anthropic_api_key`, which bills metered API credit.
 Both properties depend on the repository staying public. Larger runners bill
 even on public repos, so do not switch a job to one.
 
+## Start here: what is actually outstanding
+
+**Read the issue queue before doing anything else.** `gh issue list --state open`
+plus a glance at what closed recently is the fastest way to pick up where the
+last session stopped, and it is cheaper than re-deriving the state from the
+code.
+
+**An open issue here does not mean outstanding work.** Three of them are open
+for reasons that are not "unfinished", and reading the titles alone gets this
+wrong every time:
+
+| Issue | Why it is open |
+| --- | --- |
+| #5 | The **running design list**, open by design. New design points get appended to it rather than opening their own issue. It is a container, not a task. |
+| #17 | **Deliberately parked.** `data/dataset/` is a fixed snapshot and re-fitting it weekly would republish identical bytes. The unpark trigger is newer vintages arriving — not a decision anyone needs to revisit meanwhile. |
+| #2 | Open only for `claude-code.yml` and `claude-code-review.yml`. **No agent can ever close it:** a GitHub App cannot write under `.github/workflows/` without the `workflows` permission, which this one does not carry. Confirmed twice, including after a full App reinstall. These get applied by hand. |
+
+So the useful question is not "what is open" but "what is open **and** actionable".
+
+**Labels carry the queue state**, and `.github/workflows/claude-agent-queue.yml`
+acts on them:
+
+- `agent-ready` — queued. The queue takes **one per run**, on `issues: labeled`
+  and a 6-hourly cron.
+- `agent-working` — claimed. A run that dies without releasing this leaves the
+  claim behind; the next cron fire is what recovers it.
+- `agent-done` — the agent finished its part. **Not the same as closed** — #2
+  carries this label and is still open.
+- `agent-blocked` — a dead end. It is deliberately **not** restored to
+  `agent-ready`, because a dead end that retries forever is worse than one that
+  waits for a person.
+
+**Check `main`, not just the issue.** Work can be complete on a branch, or
+merged but not reflected in `NEWS.md`, and neither shows in the issue state.
+That is exactly how the #15/#16 changelog entry went missing: the deferral was
+correct, the follow-through had nowhere to live. `git log --oneline -15` and the
+top of `NEWS.md` settle it in seconds.
+
+**Read the issue body for ordering before starting one.** Dependencies between
+issues are written in the bodies, not expressed by any label — #21 must not be
+worked before #20, for instance. The queue picks one issue at a time and has no
+notion of a blocked-by edge.
+
 ## Conventions
 
 - **Issue-driven, branch per issue.** Every change gets an issue, a short-lived

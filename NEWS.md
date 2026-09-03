@@ -27,6 +27,14 @@ published.
   and then not written on the day it merged. A rule that lives in one PR's
   review comment does not survive to the next one, so it is a convention now.
 
+- `CLAUDE.md` gained a "Start here" section recording what the open issue list
+  actually means. Three issues are open for reasons that are not "unfinished" —
+  #5 is the running design list, #17 is deliberately parked until newer vintages
+  arrive, and #2 is open only for two workflow files no agent can write — so
+  reading the titles alone gets the state wrong every time. It also writes down
+  what the four `agent-*` labels mean and that ordering between issues lives in
+  the bodies, since the queue has no notion of one issue blocking another.
+
 ## 2026-08-27
 
 - *Presentation.* Muted text and links now clear WCAG AA. `--text-muted` — the
