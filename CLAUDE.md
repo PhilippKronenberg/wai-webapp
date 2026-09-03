@@ -141,6 +141,20 @@ even on public repos, so do not switch a job to one.
 - **Issue-driven, branch per issue.** Every change gets an issue, a short-lived
   branch off an up-to-date `main`, and a PR. Never commit to `main`.
 - Commit messages end with `Closes #N` and a `Co-Authored-By:` line.
+- **Every PR updates `NEWS.md`, in the same PR.** A merge to `main` deploys, so
+  the top of that file is what is live. Add the entry under a `## YYYY-MM-DD`
+  heading for the day the change reaches `main`, newest first, and mark it
+  *Data* if the published numbers moved or *Presentation* if what the page
+  shows changed; leave it unmarked for repository infrastructure. Marking
+  matters most for data: `wai_data.csv` is republished in full on every update,
+  so a change to the numbers is invisible in the diff and the changelog is the
+  only place a reader who cites the index can find it.
+
+  Write the entry against the file it describes rather than from the commit
+  message — reviewing #18 that way turned up two wrong figures in an entry that
+  read perfectly well. **Do not write an entry for work that is not yet on
+  `main`**; it belongs in the file the day its PR merges, which is exactly how
+  the #15/#16 entry came to be missing.
 - **Design changes go to the running design issue** rather than getting their
   own — see #5, which stays open as the accumulating list.
 - After editing any workflow, run `gh workflow list` and confirm it still shows

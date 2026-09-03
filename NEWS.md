@@ -19,6 +19,14 @@ they can be found quickly:
 Anything unmarked is repository infrastructure and does not affect what is
 published.
 
+## 2026-09-03
+
+- `CLAUDE.md` now requires every PR to update this file in the same PR. The
+  changelog had already fallen a change behind: the entry for the dark-accent
+  contrast fix was deliberately held back while PR #16 was unmerged, correctly,
+  and then not written on the day it merged. A rule that lives in one PR's
+  review comment does not survive to the next one, so it is a convention now.
+
 ## 2026-08-27
 
 - *Presentation.* Muted text and links now clear WCAG AA. `--text-muted` — the
