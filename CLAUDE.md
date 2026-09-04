@@ -83,6 +83,32 @@ against the CSV precisely because nothing else would notice.
   run summary via `.github/scripts/a11y-summary.mjs`. Promote it to a gate once
   what it reports is fixed.
 
+**The staleness alarm exists but is not armed yet.** `node
+tools/validate-data.mjs --check-staleness` fails when `wai_meta.json`'s
+`vintage_date` is more than `STALE_AFTER_DAYS` behind today — the alarm for an
+update pipeline that has quietly stopped, since the page goes on serving stale
+numbers that look entirely correct and nothing currently tells anyone (#24,
+the alarm half of parked #17). **Nothing calls the flag yet.** It needs a
+weekly `schedule:` trigger and a `freshness` job in `ci.yml`, and the Claude
+GitHub App cannot push files under `.github/workflows/`, so that hunk has to
+be applied by a human — see #24 for the exact diff. When adding it:
+
+- Scheduled and `workflow_dispatch` only, never inside `check`. It fails on the
+  calendar rather than on the diff, and a merge gate that fails a correct pull
+  request for a reason its author cannot fix is one people learn to override.
+- Never `continue-on-error`. A failed scheduled run on the default branch
+  emailing the owner *is* the notification; an advisory job leaves the run
+  green and sends nothing.
+- Put the event name in the `concurrency` group. Scheduled runs and pushes to
+  `main` share `refs/heads/main`, so with `cancel-in-progress` a push cancels
+  the alarm in flight — and a cancelled run is green.
+
+`STALE_AFTER_DAYS` is deliberately loose at 365. The upstream input is a fixed
+snapshot ending 2026-04-07, so the vintage is frozen on purpose and a threshold
+matching the cadence vintages are *expected* to arrive at would be red from the
+day it landed — noise from the start, and a permanently red scheduled job is
+one nobody reads. Tighten it to a few weeks the day the pipeline resumes.
+
 **The link job accepts HTTP 403 as alive.** `index.html` cites
 `doi:10.1002/jae.3104`, which resolves to `onlinelibrary.wiley.com`, and Wiley
 returns 403 to any non-browser client including one sending a full desktop user
