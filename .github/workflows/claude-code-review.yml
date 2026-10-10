@@ -1,0 +1,43 @@
+name: Claude Code Review
+
+# Taken from mfbdfm (#2). Manual only, to conserve subscription quota: Actions
+# tab -> Claude Code Review -> Run workflow, and give the PR number.
+#
+# mfbdfm's copy has no input and reads the number from
+# github.event.pull_request, which is empty on a workflow_dispatch run, so its
+# manual trigger does not know which PR to review. Here the number is an input.
+# Restoring automatic reviews means adding a pull_request trigger and falling
+# back to github.event.pull_request.number in the prompt.
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number to review"
+        required: true
+        type: number
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Subscription, not metered API credit -- see claude-code.yml.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ inputs.pr }}'
