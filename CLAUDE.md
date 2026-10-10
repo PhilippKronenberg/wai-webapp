@@ -72,16 +72,31 @@ against the CSV precisely because nothing else would notice.
   merge gate. External link checking depends on other people's servers being
   reachable and willing, so it fails for reasons unrelated to the change under
   review, and gating merges on it teaches people to ignore red.
-- **`a11y`** is advisory for a different reason: it grades the page as it
-  stands, not the change under review, so it was already red the day it was
-  added. It serves the page and runs axe-core against the `http://` URL —
+- **`a11y`** gates merges too, as its own job so an accessibility failure
+  does not look like a data failure. It was advisory until its backlog was
+  empty in all three palettes, because it grades the page as it stands rather
+  than the change under review (#21). axe-core is pinned only to the major, so
+  a new rule can turn an unrelated PR red; that is a real finding, not noise.
+  It serves the page and runs axe-core against the `http://` URL —
   never the file, because `fetch()` is blocked over `file://` and an auditor
   pointed at the file grades the error banner and reports almost nothing.
-  A step before the audit asserts the dashboard actually rendered (stat tiles
-  present, chart canvas sized by Chart.js, error banner still hidden) so a
-  silent data failure cannot masquerade as a clean audit. Findings go to the
-  run summary via `.github/scripts/a11y-summary.mjs`. Promote it to a gate once
-  what it reports is fixed.
+  Findings go to the run summary via `.github/scripts/a11y-summary.mjs`.
+
+  **It audits three times, once per palette**, because a browser is only ever
+  in one of them and the light-only version it replaces was green through both
+  contrast bugs this repository has produced (#11, #15). The passes are
+  `light`, `dark-toggle` (presses `#theme-btn`) and `dark-media` (emulates
+  `prefers-color-scheme: dark`). The two dark passes are not redundant: #11
+  existed only in `:root[data-theme="dark"]`, so emulating the media query
+  alone would still have missed it. `@axe-core/cli` cannot set a theme before
+  it audits, so `.github/scripts/a11y-audit.mjs` drives the preinstalled
+  chromedriver itself over plain HTTP with `fetch` — Node built-ins only, with
+  axe-core `npm pack`ed into `/tmp` at run time. It asserts the dashboard
+  actually rendered (stat tiles present, chart canvas sized by Chart.js, error
+  banner still hidden) in front of every pass and again after each theme
+  switch, so neither a silent data failure nor a theme switch that breaks the
+  page can masquerade as a clean audit. Exit 1 is violations; exit 2 is the
+  audit never having run.
 
 **The link job accepts HTTP 403 as alive.** `index.html` cites
 `doi:10.1002/jae.3104`, which resolves to `onlinelibrary.wiley.com`, and Wiley
