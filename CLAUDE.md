@@ -72,13 +72,15 @@ against the CSV precisely because nothing else would notice.
   merge gate. External link checking depends on other people's servers being
   reachable and willing, so it fails for reasons unrelated to the change under
   review, and gating merges on it teaches people to ignore red.
-- **`a11y`** is advisory for a different reason: it grades the page as it
-  stands, not the change under review, so it was already red the day it was
-  added. It serves the page and runs axe-core against the `http://` URL —
+- **`a11y`** gates merges too, as its own job so an accessibility failure
+  does not look like a data failure. It was advisory until its backlog was
+  empty in all three palettes, because it grades the page as it stands rather
+  than the change under review (#21). axe-core is pinned only to the major, so
+  a new rule can turn an unrelated PR red; that is a real finding, not noise.
+  It serves the page and runs axe-core against the `http://` URL —
   never the file, because `fetch()` is blocked over `file://` and an auditor
   pointed at the file grades the error banner and reports almost nothing.
   Findings go to the run summary via `.github/scripts/a11y-summary.mjs`.
-  Promote it to a gate once what it reports is fixed.
 
   **It audits three times, once per palette**, because a browser is only ever
   in one of them and the light-only version it replaces was green through both
