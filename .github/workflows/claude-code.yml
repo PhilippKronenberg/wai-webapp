@@ -1,9 +1,7 @@
 name: Claude Code
 
 # Answers an @claude mention in an issue, a PR comment or a review. Taken from
-# mfbdfm (#2). The automatic PR review workflow was deliberately not taken: the
-# agent queue already opens PRs for a human to review, and a review on every PR
-# spends subscription quota for little.
+# mfbdfm (#2), alongside claude-code-review.yml.
 #
 # claude-code-action only responds to commenters with write access to the
 # repository, so a drive-by mention on this public repo does nothing.
