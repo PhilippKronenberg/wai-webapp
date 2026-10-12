@@ -63,7 +63,7 @@ against the CSV precisely because nothing else would notice.
 
 ## CI
 
-`.github/workflows/ci.yml`, three jobs:
+`.github/workflows/ci.yml`, four jobs:
 
 - **`check`** gates merges. `node tools/validate-data.mjs`, then
   `sha256sum -c vendor/SHA256SUMS`, then `npx html-validate index.html`. All
@@ -98,15 +98,18 @@ against the CSV precisely because nothing else would notice.
   page can masquerade as a clean audit. Exit 1 is violations; exit 2 is the
   audit never having run.
 
-**The staleness alarm exists but is not armed yet.** `node
-tools/validate-data.mjs --check-staleness` fails when `wai_meta.json`'s
-`vintage_date` is more than `STALE_AFTER_DAYS` behind today — the alarm for an
-update pipeline that has quietly stopped, since the page goes on serving stale
-numbers that look entirely correct and nothing currently tells anyone (#24,
-the alarm half of parked #17). **Nothing calls the flag yet.** It needs a
-weekly `schedule:` trigger and a `freshness` job in `ci.yml`, and the Claude
-GitHub App cannot push files under `.github/workflows/`, so that hunk has to
-be applied by a human — see #24 for the exact diff. When adding it:
+- **`freshness`** is the staleness alarm (#24, the alarm half of parked #17).
+  It runs `node tools/validate-data.mjs --check-staleness`, which fails when
+  `wai_meta.json`'s `vintage_date` is more than `STALE_AFTER_DAYS` behind today
+  — the alarm for an update pipeline that has quietly stopped, since the page
+  goes on serving stale numbers that look entirely correct. It runs on the
+  weekly `schedule:` trigger (Mondays 06:00 UTC) and on `workflow_dispatch`
+  only.
+
+**The Claude GitHub App cannot push files under `.github/workflows/`** (it lacks
+the `workflows` permission, which a workflow file cannot grant), so any change
+to `ci.yml` has to be pushed by a human account. Three things about
+`freshness` are load-bearing:
 
 - Scheduled and `workflow_dispatch` only, never inside `check`. It fails on the
   calendar rather than on the diff, and a merge gate that fails a correct pull
