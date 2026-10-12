@@ -63,7 +63,7 @@ against the CSV precisely because nothing else would notice.
 
 ## CI
 
-`.github/workflows/ci.yml`, three jobs:
+`.github/workflows/ci.yml`, four jobs:
 
 - **`check`** gates merges. `node tools/validate-data.mjs`, then
   `sha256sum -c vendor/SHA256SUMS`, then `npx html-validate index.html`. All
@@ -97,6 +97,35 @@ against the CSV precisely because nothing else would notice.
   switch, so neither a silent data failure nor a theme switch that breaks the
   page can masquerade as a clean audit. Exit 1 is violations; exit 2 is the
   audit never having run.
+
+- **`freshness`** is the staleness alarm (#24, the alarm half of parked #17).
+  It runs `node tools/validate-data.mjs --check-staleness`, which fails when
+  `wai_meta.json`'s `vintage_date` is more than `STALE_AFTER_DAYS` behind today
+  — the alarm for an update pipeline that has quietly stopped, since the page
+  goes on serving stale numbers that look entirely correct. It runs on the
+  weekly `schedule:` trigger (Mondays 06:00 UTC) and on `workflow_dispatch`
+  only.
+
+**The Claude GitHub App cannot push files under `.github/workflows/`** (it lacks
+the `workflows` permission, which a workflow file cannot grant), so any change
+to `ci.yml` has to be pushed by a human account. Three things about
+`freshness` are load-bearing:
+
+- Scheduled and `workflow_dispatch` only, never inside `check`. It fails on the
+  calendar rather than on the diff, and a merge gate that fails a correct pull
+  request for a reason its author cannot fix is one people learn to override.
+- Never `continue-on-error`. A failed scheduled run on the default branch
+  emailing the owner *is* the notification; an advisory job leaves the run
+  green and sends nothing.
+- Put the event name in the `concurrency` group. Scheduled runs and pushes to
+  `main` share `refs/heads/main`, so with `cancel-in-progress` a push cancels
+  the alarm in flight — and a cancelled run is green.
+
+`STALE_AFTER_DAYS` is deliberately loose at 365. The upstream input is a fixed
+snapshot ending 2026-04-07, so the vintage is frozen on purpose and a threshold
+matching the cadence vintages are *expected* to arrive at would be red from the
+day it landed — noise from the start, and a permanently red scheduled job is
+one nobody reads. Tighten it to a few weeks the day the pipeline resumes.
 
 **The link job accepts HTTP 403 as alive.** `index.html` cites
 `doi:10.1002/jae.3104`, which resolves to `onlinelibrary.wiley.com`, and Wiley
