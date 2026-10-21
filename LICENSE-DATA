@@ -22,5 +22,14 @@ Suggested attribution:
 
 SCOPE. This license covers only the derived, aggregate model output published
 here. It does NOT extend to the underlying source series used to estimate the
-index, which are licensed from third parties, are not contained in this
-repository, and are not redistributable under these terms.
+index, which are licensed from third parties and are not redistributable under
+these terms.
+
+Two folders contain third-party source series on their publishers' own terms,
+which are narrower than this license. They are excluded from it, and each
+states its source's terms in its README:
+
+  snb/          Swiss National Bank data portal. Non-commercial use only, with
+                reference to the source.
+  seco_amstat/  SECO labour-market statistics via arbeit.swiss, whose legal
+                notice transfers no rights in the content.
