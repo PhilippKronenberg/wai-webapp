@@ -1,0 +1,105 @@
+dimension,code,parent,label
+NOGA,10-12,C,10-12 Herstellung von Nahrungsmitteln und Tabakerzeugnissen
+NOGA,13-15,C,13-15 Herstellung von Textilien und Bekleidung
+NOGA,16-18,C,"16-18 Herstellung von Holzwaren, Papier und Druckerzeugnissen"
+NOGA,19_20,C,"19_20 Kokerei, Mineralölverarbeitung und Herstellung von chemischen Erzeugnissen"
+NOGA,21,C,21 Herstellung von pharmazeutischen Erzeugnissen
+NOGA,22_23,C,22_23 Herstellung von Gummi- und Kunststoffwaren
+NOGA,24_25,C,24_25 Herstellung von Metallerzeugnissen
+NOGA,26,C,26 Herstellung von Datenverarbeitungsgeräten und Uhren
+NOGA,26_27,C,26_27 Herstellung von Datenverarbeitungsgeräten und Uhren und Herstellung von elektrischen Ausrüstungen
+NOGA,27,C,27 Herstellung von elektrischen Ausrüstungen
+NOGA,28,C,28 Maschinenbau
+NOGA,29_30,C,29_30 Fahrzeugbau
+NOGA,31-33,C,"31-33 Sonstige Herstellung von Waren, Reparatur und Installation"
+NOGA,41,F,41 Hochbau
+NOGA,41_43,F,41_43 Hochbau und Sonstiges Baugewerbe
+NOGA,42,F,42 Tiefbau
+NOGA,43,F,43 Sonstiges Baugewerbe
+NOGA,45,G,45 Handel und Reparatur von Motorfahrzeugen
+NOGA,46,G,46 Grosshandel
+NOGA,46B,46,46B Grosshandel mit Gebrauchs- und Verbrauchsgütern bzw. mit Geräten der Informations- und Kommunikationstechnik
+NOGA,46FO,46,"46FO Grosshandel mit Nahrungsmitteln, Getränken, Tabakwaren"
+NOGA,46NF,46,46NF Übriger Grosshandel ohne Rohstoffhandel
+NOGA,46TR,46,46TR Rohstoffhandel
+NOGA,46xTR,46,46xTR Grosshandel ohne Rohstoffhandel
+NOGA,47,G,47 Detailhandel
+NOGA,4711,47,"4711 Detailhandel mit Waren verschiedener Art, Hauptrichtung Nahrungs- und Genussmittel, Getränke und Tabakwaren"
+NOGA,4711_472,47,"4711_472 Detailhandel mit Nahrungsmitteln, Getränken, Tabakwaren"
+NOGA,4719,47,4719 Sonstiger Detailhandel mit Waren verschiedener Art
+NOGA,4719_474-479,47,4719_474-479 Detailhandel mit Nicht-Nahrungsmitteln (ohne Tankstellen)
+NOGA,472,47,"472 Detailhandel mit Nahrungs- und Genussmitteln, Getränken und Tabakwaren (in Verkaufsräumen)"
+NOGA,473,47,473 Detailhandel mit Motorenkraftstoffen (Tankstellen)
+NOGA,474,47,474 Detailhandel mit Geräten der Informations- und Kommunikationstechnik (in Verkaufsräumen)
+NOGA,475,47,"475 Detailhandel mit sonstigen Haushaltsgeräten, Textilien, Heimwerker- und Einrichtungsbedarf (in Verkaufsräumen)"
+NOGA,476,47,"476 Detailhandel mit Verlagsprodukten, Sportausrüstungen und Spielwaren (in Verkaufsräumen)"
+NOGA,477,47,477 Detailhandel mit sonstigen Gütern (in Verkaufsräumen)
+NOGA,478_479,47,478_479 Detailhandel an Verkaufsständen und auf Märkten; Versand- und Internet-Detailhandel
+NOGA,47P,47,47P Warengruppen des Detailhandels
+NOGA,47P_Bekl,47P,"47P_Bekl Bekleidung, Schuhe"
+NOGA,47P_Food,47P,"47P_Food Nahrungsmittel, Getränke, Tabak"
+NOGA,47P_Treib,47P,47P_Treib Treibstoffe
+NOGA,47P_UW,47P,47P_UW Übrige Warengruppen (ohne Treibstoffe)
+NOGA,47PxTreib,47P,47PxTreib Total Detailhandel ohne Treibstoffe
+NOGA,47x473,47,47x473 Total Detailhandel ohne Tankstellen
+NOGA,49,H,49 Landverkehr und Transport in Rohrfernleitungen
+NOGA,50_51,H,50_51 Schifffahrt und Luftfahrt
+NOGA,52_53,H,"52_53 Lagerei sowie Erbringung von sonstigen Dienstleistungen für den Verkehr; Post-, Kurier- und Expressdienste"
+NOGA,55,I,55 Beherbergung
+NOGA,56,I,56 Gastronomie
+NOGA,58,J,58 Verlagswesen
+NOGA,58-60,J,"58-60 Verlagswesen, Film-, Video- und Fernsehprogrammproduktion; Tonaufnahmen, Programmierung und Rundfunkaktivitäten"
+NOGA,59_60,J,59_60 Audiovisuelle Medien und Rundfunk
+NOGA,61,J,61 Telekommunikation
+NOGA,62,J,62 Erbringung von Dienstleistungen der Informationstechnologie
+NOGA,62_63,J,62_63 Informationstechnologische und Informationsdienstleistungen
+NOGA,63,J,63 Informationsdienstleistungen
+NOGA,69,M,"69 Rechts- und Steuerberatung, Wirtschaftsprüfung"
+NOGA,69-71,M,69-71 Rechts- und Steuerberatungstätigkeiten; Tätigkeiten von Hauptverwaltungen; Unternehmensberatung; Architektur- und Ingenieurtätigkeiten; technische Prüfungen und Analysen
+NOGA,69_702,M,"69_702 Rechts-, Steuerberatung, Wirtschaftsprüfung und Public-Relations- und Unternehmensberatung"
+NOGA,702,M,702 Public-Relations- und Unternehmensberatung
+NOGA,71,M,71 Architektur- und Ingenieurbüros
+NOGA,73,M,73 Werbung und Marktforschung
+NOGA,74,M,"74 Sonstige freiberufliche, wissenschaftliche und technische Tätigkeiten"
+NOGA,77,N,77 Vermietung von beweglichen Sachen
+NOGA,78,N,78 Vermittlung und Überlassung von Arbeitskräften
+NOGA,79,N,"79 Reisebüros, Reiseveranstalter und Erbringung sonstiger Reservierungsdienstleistungen"
+NOGA,80,N,80 Wach- und Sicherheitsdienste sowie Detekteien
+NOGA,81,N,81 Gebäudebetreuung; Garten- und Landschaftsbau
+NOGA,82,N,82 Erbringung von wirtschaftlichen Dienstleistungen für Unternehmen und Privatpersonen a. n. g.
+NOGA,B,B-E,B BERGBAU UND GEWINNUNG VON STEINEN UND ERDEN
+NOGA,B-E,B-F,B-E Industrie
+NOGA,B-F,,B-F Sekundärer Sektor
+NOGA,B-NxK,,B-NxK Gesamtwirtschaft (ausser Finanz- und Versicherungswesen)
+NOGA,C,B-E,C VERARBEITENDES GEWERBE/HERSTELLUNG VON WAREN
+NOGA,D,B-E,D ENERGIEVERSORGUNG
+NOGA,F,B-F,F BAUGEWERBE/BAU
+NOGA,G,G-N,G HANDEL; INSTANDHALTUNG UND REPARATUR VON MOTORFAHRZEUGE
+NOGA,G-NxK,,G-NxK Tertiärer Sektor (ohne Erbringung von Finanz- und Versicherungsdienstleistungen)
+NOGA,H,G-N,H VERKEHR UND LAGEREI
+NOGA,H-NxK,,H-NxK Tertiärer Sektor ohne Handel
+NOGA,I,G-N,I GASTGEWERBE/BEHERBERGUNG UND GASTRONOMIE
+NOGA,J,G-N,J INFORMATION UND KOMMUNIKATION
+NOGA,L,G-N,L GRUNDSTÜCKS- UND WOHNUNGSWESEN
+NOGA,M,G-N,"M ERBRINGUNG VON FREIBERUFLICHEN, WISSENSCHAFTLICHEN UND TECHNISCHEN DIENSTLEISTUNGEN"
+NOGA,MIG_CAG,B-E,MIG_CAG Investitionsgüter
+NOGA,MIG_COG,B-E,MIG_COG Konsumgüter
+NOGA,MIG_DCOG,B-E,MIG_DCOG Gebrauchsgüter
+NOGA,MIG_ING,B-E,MIG_ING Vorleistungsgüter
+NOGA,MIG_NDCOG,B-E,MIG_NDCOG Verbrauchsgüter
+NOGA,MIG_NRG,B-E,MIG_NRG Energie
+NOGA,N,G-N,N ERBRINGUNG VON SONSTIGEN WIRTSCHAFTLICHEN DIENSTLEISTUNGEN
+ADJUSTMENT,N,,Weder saisonbereinigte noch kalenderbereinigte Daten
+ADJUSTMENT,W,,"Kalenderbereinigte Daten, nicht saisonal bereinigt"
+ADJUSTMENT,Y,,Kalender- und saisonbereinigte Daten
+INDICATOR_KE,PTOT,,Produktion / Gesamtumsatz (real)
+INDICATOR_KE,UEXP,,Auslandumsatz (nominal)
+INDICATOR_KE,UINL,,Inlandumsatz (nominal)
+INDICATOR_KE,UTOT,,Gesamtumsatz (nominal)
+UNIT_MEASURE,IX,,Index
+UNIT_MEASURE,VARM-1,,Veränderung gegenüber Vormonat
+UNIT_MEASURE,VARM-12,,Veränderung gegenüber Vorjahresmonat
+OBS_STATUS,A,,Normaler Wert
+OBS_STATUS,L,,"Fehlender Wert; Daten sind vorhanden, wurden aber nicht veröffentlicht"
+OBS_STATUS,M,,Fehlender Wert; Daten können nicht existieren
+OBS_STATUS,P,,Provisorischer Wert
