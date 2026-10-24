@@ -1,0 +1,97 @@
+{
+  "retrieved_utc": "2026-10-22T11:17:38Z",
+  "source_page": "https://www.arbeit.swiss/de/informationszentrum/arbeitsmarktstatistik-schweiz",
+  "note": "One entry per Leporello linked from the page at the time of the run. reported_in joins to the CSV column of the same name.",
+  "documents": [
+    {
+      "reported_in": "2026-01",
+      "title": "Leporello Januar 2026 PDF",
+      "page_date": null,
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/06/01/88cbf6bc-6506-4c68-8f53-ef3a7f6566aa.pdf",
+      "bytes": 55740,
+      "sha256": "dfa43d15d6fd0e74633dd179dc7182e62fd2b9f6abcd85bda89d5d4523c66d9e",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-02",
+      "title": "Leporello Februar 2026 PDF",
+      "page_date": null,
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/06/01/16457a49-4514-49e1-82a7-e26104b81513.pdf",
+      "bytes": 56374,
+      "sha256": "19b976c390ea7aa61336fc01044ff30993a8944be296b11159f07c1998b9f946",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-03",
+      "title": "Leporello März 2026 PDF",
+      "page_date": null,
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/06/01/ee1248cf-dea2-4dbd-83a7-3ec367935e4f.pdf",
+      "bytes": 55823,
+      "sha256": "ab38f8648c21d89186d7b009a464211c90bacbe34b42e85807e6acd42118b02f",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-04",
+      "title": "Leporello April 2026 PDF",
+      "page_date": null,
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/06/01/0ef77c3f-7970-45fd-b3c5-ffddbb94b811.pdf",
+      "bytes": 56126,
+      "sha256": "f501a577bb6b27f99c822e0b55447eb9d5d45a675a9abf1e817ef9cfbb9285e7",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-05",
+      "title": "Leporello Mai 2026 PDF",
+      "page_date": null,
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/06/10/02de7b3f-f3bf-4694-b5a7-826505926184.pdf",
+      "bytes": 56321,
+      "sha256": "445373d66eff78552730fa123985259aadc65d45d7271fa84456ddbe84fff9d1",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-06",
+      "title": "Leporello Juni 2026 PDF | 06.07.2026",
+      "page_date": "2026-07-06",
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/07/03/330db537-a320-46a5-a3ff-4096b59d455f.pdf",
+      "bytes": 55995,
+      "sha256": "d0169378fe62c3aa6cf26d75bce966e7672d87f6d1ac2f44572fc532ca152fd2",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-07",
+      "title": "Leporello Juli 2026 PDF | 06.08.2026",
+      "page_date": "2026-08-06",
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/08/05/ab3f74f5-a310-491e-9ddc-80a8e52f96f5.pdf",
+      "bytes": 56017,
+      "sha256": "ed39c49fea1140077923fe819854c2db0b2bf3f4c623ddb5ab130084d80b074a",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-08",
+      "title": "Leporello August 2026 PDF | 07.09.2026",
+      "page_date": "2026-09-07",
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/09/04/c81863d1-6d82-47c7-8e4d-10452937895b.pdf",
+      "bytes": 55989,
+      "sha256": "63005acbff2408cbd33cd425b418ffb226cc89ab191d5faac4911b65f1d7df6f",
+      "status": "ok",
+      "series_extracted": 12
+    },
+    {
+      "reported_in": "2026-09",
+      "title": "Leporello September 2026 PDF | 06.10.2026",
+      "page_date": "2026-10-06",
+      "url": "https://www.arbeit.swiss/api/media/fileservice/sdweb-docs-prod-arbeitswiss-files/files/2026/10/05/933579f7-efc3-4647-80a6-f997b8ff5738.pdf",
+      "bytes": 56001,
+      "sha256": "5c43974deca6701e256871bc6c0c5c59a2b4f6f2e2bad5f1fdf6fe2bf82cc2bc",
+      "status": "ok",
+      "series_extracted": 12
+    }
+  ]
+}

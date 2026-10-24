@@ -1,0 +1,27 @@
+{
+  "retrieved_utc": "2026-10-22T11:13:58Z",
+  "source": "https://data.snb.ch/",
+  "note": "publishing_date is the SNB cube PublishingDate at the time of download, in SNB local time.",
+  "cubes": [
+    {
+      "cube_id": "snbgwdzid",
+      "label": "SNB policy rate, SARON fixing and sight-deposit rates",
+      "csv": "snb_policy_rates.csv",
+      "publishing_date": "2026-10-19 10:00",
+      "observations": 18930,
+      "series": 7,
+      "first_date": "2004-05-03",
+      "last_date": "2026-10-16"
+    },
+    {
+      "cube_id": "devwkieffid",
+      "label": "Effective (trade-weighted) CHF exchange-rate index",
+      "csv": "snb_chf_effective_index.csv",
+      "publishing_date": "2026-10-07 09:00",
+      "observations": 80828,
+      "series": 12,
+      "first_date": "1999-01-01",
+      "last_date": "2026-09-30"
+    }
+  ]
+}

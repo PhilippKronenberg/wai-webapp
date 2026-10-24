@@ -1,0 +1,20 @@
+cube_id,series_id,series,unit,first_date,last_date,observations
+snbgwdzid,ENG,Special rate  (Liquidity-shortage financing facility),percent,2004-05-03,2026-10-16,5677
+snbgwdzid,FREI,Threshold factor,factor,2019-10-28,2026-10-16,1820
+snbgwdzid,LZ,SNB policy rate,percent,2019-06-13,2026-10-16,1917
+snbgwdzid,SARON,SARON fixing at the close of the trading day,percent,2009-08-24,2026-10-16,4332
+snbgwdzid,ZIABP,Discount in basis points,basis points,2022-09-23,2026-10-16,1061
+snbgwdzid,ZIG,Interest rate on sight deposits above threshold,percent,2015-01-22,2026-10-16,3062
+snbgwdzid,ZIGBL,Interest rate on sight deposits up to threshold,percent,2022-09-23,2026-10-16,1061
+devwkieffid,K.E.I,"Real, CPI-based, Euro area index, Index",index,2000-11-30,2026-09-30,6740
+devwkieffid,K.E.V,"Real, CPI-based, Euro area index, Day-on-day change in %",percent,2000-12-01,2026-09-30,6739
+devwkieffid,K.G.I,"Real, CPI-based, Overall index, Index",index,2000-11-30,2026-09-30,6740
+devwkieffid,K.G.V,"Real, CPI-based, Overall index, Day-on-day change in %",percent,2000-12-01,2026-09-30,6739
+devwkieffid,N.E.I,"Nominal, Euro area index, Index",index,1999-01-01,2026-09-30,7239
+devwkieffid,N.E.V,"Nominal, Euro area index, Day-on-day change in %",percent,1999-01-04,2026-09-30,7238
+devwkieffid,N.G.I,"Nominal, Overall index, Index",index,2000-11-30,2026-09-30,6740
+devwkieffid,N.G.V,"Nominal, Overall index, Day-on-day change in %",percent,2000-12-01,2026-09-30,6739
+devwkieffid,P.E.I,"Real, PPI-based, Euro area index, Index",index,2000-11-30,2025-09-30,6479
+devwkieffid,P.E.V,"Real, PPI-based, Euro area index, Day-on-day change in %",percent,2000-12-01,2025-09-30,6478
+devwkieffid,P.G.I,"Real, PPI-based, Overall index, Index",index,2000-11-30,2025-09-30,6479
+devwkieffid,P.G.V,"Real, PPI-based, Overall index, Day-on-day change in %",percent,2000-12-01,2025-09-30,6478
