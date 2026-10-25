@@ -1,0 +1,17 @@
+# private/: read as a KOF user, it holds non-public series and pre-release
+# vintages. Never commit it, whatever is decided about public/.
+private/
+
+# public/: released public series only. Kept out of git until KOF's terms for
+# republishing public series in this public repository are confirmed; then
+# delete this line (see kof/README.md and the issue).
+public/
+
+# Stray output of the first run, which was started inside kof/ before the
+# output path was resolved from the script's location.
+kof/
+
+# An R session started in this folder writes its command history here, and a
+# session that set up KOF credentials would carry them in it. Never publish it.
+.Rhistory
+.RData
