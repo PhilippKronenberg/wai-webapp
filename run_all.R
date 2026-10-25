@@ -45,6 +45,7 @@ gdp_vintage <- arg_value("gdp-vintage", format(Sys.Date()))
 
 rscript <- file.path(R.home("bin"), "Rscript")
 pipelines <- list(            # folder, interpreter, script
+  c("seco_gdp", "R", "seco_gdp/acquire_seco_gdp.R"),
   c("trendecon", "R", "trendecon/acquire_trendecon.R"),
   c("kof", "R", "kof/acquire_kof.R"),
   c("bazg_trade", "R", "bazg_trade/acquire_bazg_trade.R"),

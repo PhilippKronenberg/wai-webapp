@@ -16,6 +16,8 @@
 #     step, from 1985 (X-13's 780-observation limit).
 #   - anz_kktrans_ch: Worldline's daily count gets stat_einkauf's daily MSTL
 #     treatment; the legacy weekly SPA file keeps its step rule.
+#   - GDP vintages from seco_gdp/ (MFBDFM_GDP_DIR), this repository's SECO
+#     pipeline, instead of the files inside the installed mfbdfm package.
 # With MFBDFM_DATASET_DIR pointing at wai_ind's data/dataset it reproduces
 # the original's dataset.
 #
@@ -985,7 +987,14 @@ sample_end_gdp_vintage_decimal <- round(
     as.numeric(format(sample_end_gdp_vintage_date, "%d")) / 365,
   3
 )
-GDP_gr_vintages_quarterly <- get_real_time_gdp_vintages("quarterly")
+# The vintages come from this repository's SECO pipeline (seco_gdp/), not from
+# the copy shipped inside the installed mfbdfm package.
+gdp_dir <- Sys.getenv("MFBDFM_GDP_DIR", file.path(project_dir, "seco_gdp"))
+GDP_gr_vintages_quarterly <- get_real_time_gdp_vintages(
+  "quarterly",
+  gdp_file_path = file.path(gdp_dir, "realtime_gdp.csv"),
+  gdp_cssa_file_path = file.path(gdp_dir, "realtime_gdp_cssa.csv")
+)
 gdp_vintage_names <- names(GDP_gr_vintages_quarterly)[-1]
 gdp_vintage_numbers <- suppressWarnings(as.numeric(gdp_vintage_names))
 valid_gdp_idx <- which(
