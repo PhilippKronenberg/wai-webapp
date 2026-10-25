@@ -18,9 +18,6 @@
 #     treatment; the legacy weekly SPA file keeps its step rule.
 #   - GDP vintages from seco_gdp/ (MFBDFM_GDP_DIR), this repository's SECO
 #     pipeline, instead of the files inside the installed mfbdfm package.
-#   - Zurich Airport: monthly bulletin totals (Flughafen_ZH_monthly_...csv)
-#     instead of the discontinued daily file, adjusted with the same
-#     seasonally_adjust_weekly() at monthly frequency (data_meta: frequency 12).
 # With MFBDFM_DATASET_DIR pointing at wai_ind's data/dataset it reproduces
 # the original's dataset.
 #
@@ -878,27 +875,13 @@ ts_swissgrid_data <- list(
 
 # 9. Zurich Airport arrivals and departures:
 # aggregate the daily counts to weekly totals and then apply weekly seasonal adjustment.
-# wai-webapp: the daily source ended with 2025; the noise bulletins give monthly
-# totals. When the monthly file is there, the same treatment is applied at
-# monthly frequency: monthly totals, then seasonally_adjust_weekly(), which
-# adjusts at the series' own frequency (a 12-month season here).
-airport_monthly_file <- file.path(dataset_dir, "Flughafen_ZH_monthly_anfluege_abfluege.csv")
-if (file.exists(airport_monthly_file)) {
-  airport_raw <- read_delim_auto(airport_monthly_file)
-  airport_dates <- parse_date_multi(airport_raw[["date"]])
-  ts_airport_data <- list(
-    zrh_airport_departure = seasonally_adjust_weekly(date_to_monthly_ts(airport_dates, airport_raw[["total_abfluege"]])),
-    zrh_airport_arrivals = seasonally_adjust_weekly(date_to_monthly_ts(airport_dates, airport_raw[["total_anfluege"]]))
-  )
-} else {
-  airport_raw <- read_delim_auto(file.path(dataset_dir, "Flughafen_ZH_daily_anfluege_abfluege.csv"))
-  arrivals_daily <- aggregate_duplicate_dates(parse_date_multi(airport_raw[["date"]]), airport_raw[["total_anfluege"]], fun = "sum")
-  departures_daily <- aggregate_duplicate_dates(parse_date_multi(airport_raw[["date"]]), airport_raw[["total_abfluege"]], fun = "sum")
-  ts_airport_data <- list(
-    zrh_airport_departure = seasonally_adjust_weekly(daily_to_weekly(departures_daily$date, departures_daily$x)),
-    zrh_airport_arrivals = seasonally_adjust_weekly(daily_to_weekly(arrivals_daily$date, arrivals_daily$x))
-  )
-}
+airport_raw <- read_delim_auto(file.path(dataset_dir, "Flughafen_ZH_daily_anfluege_abfluege.csv"))
+arrivals_daily <- aggregate_duplicate_dates(parse_date_multi(airport_raw[["date"]]), airport_raw[["total_anfluege"]], fun = "sum")
+departures_daily <- aggregate_duplicate_dates(parse_date_multi(airport_raw[["date"]]), airport_raw[["total_abfluege"]], fun = "sum")
+ts_airport_data <- list(
+  zrh_airport_departure = seasonally_adjust_weekly(daily_to_weekly(departures_daily$date, departures_daily$x)),
+  zrh_airport_arrivals = seasonally_adjust_weekly(daily_to_weekly(arrivals_daily$date, arrivals_daily$x))
+)
 
 # 10. Google mobility:
 # remove daily weekly/monthly/annual seasonality, smooth with a 7-day moving average,

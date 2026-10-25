@@ -34,8 +34,8 @@
 "Lkw-Maut-Fahrleistungsindex_DE","Truck-Toll Mileage Index, Germany","Destatis","Destatis","Alternative","Yes","Actual",,48,"Log Difference",1
 "electricity_out","Energy Consumed by Swiss End Users","Swissgrid","swissgrid","Alternative","Yes","kWh",,48,"Detrended",1
 "electricity_in","Energy Production in Switzerland","Swissgrid","swissgrid","Alternative","Yes","kWh",,48,"Detrended",1
-"zrh_airport_departure","Total Flight Departures, Zurich Airport","Zurich Airport","Flughafen_ZH","Alternative","Yes","Actual",,12,"Log Difference",1
-"zrh_airport_arrivals","Total Flight Arrivals, Zurich Airport","Zurich Airport","Flughafen_ZH","Alternative","Yes","Actual",,12,"Log Difference",1
+"zrh_airport_departure","Total Flight Departures, Zurich Airport","Zurich Airport","Flughafen_ZH","Alternative","Yes","Actual",,48,"Log Difference",1
+"zrh_airport_arrivals","Total Flight Arrivals, Zurich Airport","Zurich Airport","Flughafen_ZH","Alternative","Yes","Actual",,48,"Log Difference",1
 "mobility_retail_and_recreation","Google COVID-19 Community Mobility Reports, Retail and Recreation","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
 "mobility_grocery_and_pharmacy","Google COVID-19 Community Mobility Reports, Grocery and Pharmacy","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
 "mobility_parks","Google COVID-19 Community Mobility Reports, Parks","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
