@@ -55,6 +55,18 @@ These look like omissions and are not. Each was chosen.
 four**: `vintage_date`, `run_timestamp`, `mfbdfm_version`, `columns`. Removing
 one of those breaks the page.
 
+Four further files sit beside it, written by `export_wai_measures()` upstream:
+`wai_contributions.csv` (long: `date,component,value`), `wai_news.csv`,
+`wai_series.csv` and `wai_measures_meta.json`. They are **additive** — a
+checkout without them is valid and the page simply omits the panels that read
+them, so a 404 on any of them must leave `#error-banner` hidden. Two things are
+load-bearing: per date the contributions sum to that date's `wai_qoq`, which is
+the only claim the contributions panel makes and nothing in a browser would
+notice breaking; and the list of components comes from
+`wai_measures_meta.json` → `components`, never from a hard-coded array, because
+upstream can add a group. A component with no entry in `COMP_STYLE` in
+`index.html` still draws, in `--comp-other` and under its raw name.
+
 The rest — `n_obs`, `first_obs_date`, `last_obs_date`, `latest_wai_qoq`,
 `latest_wai_yoy`, `latest_index` — restate facts derivable from the CSV and are
 read by nobody. They can therefore drift out of agreement with the data while
