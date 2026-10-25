@@ -26,7 +26,7 @@
 #                     sub-sector series are not) and only RELEASED vintages.
 #                     Writes to kof/public/.
 #
-#   private           The copy kept by `kphilipp`, read as that user: all
+#   private           The copy kept by `kphilipp`, read as that user: every
 #   (--private)       series, and vintages that are not yet released (on
 #                     2026-10-25 it already held October, due for release on
 #                     4 Nov). That is what makes it worth having for
@@ -171,10 +171,12 @@ flatten_metadata <- function(md) {
 
 #' Download the collection and return the tables
 #'
-#' In public mode, series the open account may not read are skipped
-#' (ignore_missing) rather than failing the run, but never silently: a strict
-#' read first counts them from the API's own refusal ("not allowed to access 4
-#' of 9"), and the count is returned and reported.
+#' Series the account may not read are skipped (ignore_missing) rather than
+#' failing the run, but never silently: a strict read first counts them from
+#' the API's own refusal ("not allowed to access 4 of 9"), the collection's
+#' key list names them, and both are reported. In public mode these are the
+#' series KOF has not made public; in private mode, series in an access set
+#' the user does not have (2026-10-25: the two BAZG trade series).
 acquire_kof <- function(mode = c("public", "private"), valid_on = Sys.Date()) {
   mode <- match.arg(mode)
   owner <- owners[[mode]]
@@ -183,21 +185,30 @@ acquire_kof <- function(mode = c("public", "private"), valid_on = Sys.Date()) {
           "), valid on ", format(valid_on))
 
   skipped <- c(n = 0L, of = NA_integer_)
-  lenient <- mode == "public"
+  lenient <- TRUE
   tsl <- tryCatch(
     tsdbapi::read_collection_ts(collection, owner = owner, valid_on = valid_on),
     error = function(e) {
       hit <- regmatches(conditionMessage(e),
                         regexec("not allowed to access ([0-9]+) of ([0-9]+)", conditionMessage(e)))[[1]]
-      if (!lenient || length(hit) < 3) stop(e)
+      if (length(hit) < 3) stop(e)
       skipped[] <<- as.integer(hit[2:3])
       tsdbapi::read_collection_ts(collection, owner = owner, valid_on = valid_on,
                                   ignore_missing = TRUE)
     })
   if (!length(tsl)) stop("the collection returned no series", call. = FALSE)
   if (skipped[["n"]] > 0) {
-    message("  ", skipped[["n"]], " of ", skipped[["of"]], " series are not public ",
-            "and were skipped; run with --private for all of them")
+    keys <- tryCatch(tsdbapi::read_collection_keys(collection, owner = owner), error = function(e) NULL)
+    denied <- setdiff(keys, names(tsl))
+    which <- if (length(denied)) paste0(": ", paste(denied, collapse = ", ")) else ""
+    if (mode == "public") {
+      message("  ", skipped[["n"]], " of ", skipped[["of"]], " series are not public ",
+              "and were skipped", which, "; run with --private for all of them")
+    } else {
+      warning(skipped[["n"]], " of ", skipped[["of"]], " series could not be read with this ",
+              "account and were skipped", which, ". Their access set is not granted to the user; ",
+              "see tsdbapi::list_user_access_sets() and ask KOF for access.", call. = FALSE)
+    }
   }
 
   message("  the API returned ", length(tsl), " series: ", paste(names(tsl), collapse = ", "))
