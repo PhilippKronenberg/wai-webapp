@@ -54,17 +54,24 @@ transformed series the model reads) and classified as **same** (correlation
 ≥ 0.99, standard deviations within 10%), **similar** (≥ 0.90), **different**,
 **missing** or **new**.
 
-First build, 2026-10-25: **37 same, 6 similar, 3 different, 0 missing.**
+Build of 2026-10-26, with all 9 KOF series from the private download:
+**35 same, 8 similar, 3 different, 0 missing.**
 
 - **different** (by design, the series changed): `anz_kktrans_ch` (Worldline
   count instead of SPA, 2020 only before), exports and imports (BAZG nominal
   SA instead of the OZD real index).
 - **similar:** CPI, PPI and core inflation (BFS data adjusted with X-13
-  here, Datastream's adjustment before), and 3 KOF series (newer vintages
-  revise the seasonal adjustment).
-- Four KOF manufacturing sub-sector series are not public. Until
-  `kof/acquire_kof_loggedin.R` has been run, they come from the old bundle
-  and end in 2026-03 (the manifest marks them `FALLBACK`).
+  here, Datastream's adjustment before), and 5 KOF series (correlation
+  0.95–0.99: newer vintages revise the seasonal adjustment).
+
+**KOF.** The assembler uses `kof/private/` when it exists (run
+`kof/acquire_kof_loggedin.R` interactively first), else `kof/public/`.
+Public access covers 5 of the 9 series; without the private download, the
+four manufacturing sub-sector series come from the old bundle, end in
+2026-03 and are marked `FALLBACK` in the manifest. The private download can
+hold **pre-release** vintages (2026-10-26: October values, released by KOF
+on 2026-11-04). The dataset may be used internally, but nothing built from
+it may be published before the release.
 
 ## Test run
 
