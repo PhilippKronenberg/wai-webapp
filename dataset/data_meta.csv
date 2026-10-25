@@ -1,0 +1,47 @@
+"keys","Name","Source","Metasource","Category","Alternative","Unit","Start.Date","Frequency","Transformation","Flow"
+"SWCONPRCE","Consumer Price Index, Total","FSO","datastream","Prices","No","Index, 2015M12=100",,12,"Log Difference",0
+"SWPROPRCE","Producer Prices Index","FSO","datastream","Prices","No","Index, 2015M12=100",,12,"Log Difference",0
+"SWCPCOREF","Consumer Price Index, Excl. Energy, Fresh & Seasonal Products","FSO","datastream","Prices","No","Index, 2015M12=100",,12,"Log Difference",0
+"ch.fso.rtt.ind.r.noga0801.sa","Retail Sales, Total","FSO","FSO","Retail","No","Index, 2015=100",,12,"Log Difference",1
+"SWPURCHSQ","Purchasing Managers Index, Manufacturing Sector","procure.ch \& UBS","datastream","Survey","No","Index (Diffusion)",,12,"Log Difference",0
+"SWPMIORDQ","Purchasing Managers Index, Manufacturing Sector, Backlog of Orders","procure.ch \& UBS","datastream","Survey","No","Index (Diffusion)",,12,"Log Difference",0
+"SWPMIPROQ","Purchasing Managers Index, Manufacturing Sector, Output","procure.ch \& UBS","datastream","Survey","No","Index (Diffusion)",,12,"Log Difference",0
+"FINANSW","Swiss Stock Market Index, Financials","Datastream","datastream","Financial","No","CHF",,48,"Log Difference",1
+"INDUSSW","Swiss Stock Market Index, Industrials","Datastream","datastream","Financial","No","CHF",,48,"Log Difference",1
+"SWISSMI","Swiss Market Index (SMI) ","SIX Group","datastream","Financial","No","CHF",,48,"Log Difference",1
+"oev_freq_hardbruecke","Public Transport Passenger Frequency, Zurich Hardbruecke","SBB","ktzh","Alternative","Yes","Actual",,48,"Log Difference",1
+"oev_freq_hb","Public Transport Passenger Frequency, Zurich Main Station","SBB","ktzh","Alternative","Yes","Actual",,48,"Log Difference",1
+"tages_distanz_median","Median Day Distance of Representative Swiss Population Sample","intervista","ktzh","Alternative","Yes","km",,48,"Log Difference",1
+"debiteinsatz_ausland","Swiss Debit Card Transactions Abroad, Volume in CHF","SIX Group","ktzh","Alternative","Yes","CHF, in Millions",,48,"Log Difference",1
+"bezug_bargeld","Cash Withdrawals, Swiss-Wide Volume in CHF","SIX Group","ktzh","Alternative","Yes","CHF, in Millions",,48,"Log Difference",1
+"stat_einkauf","Non-Online Retail Sales, Swiss-Wide Volume in CHF","SIX Group","ktzh","Alternative","Yes","CHF, in Millions",,48,"Log Difference",1
+"aufkommen_miv","Private Transport Frequency, Important Counting Stations, Zurich","StatistikZH","ktzh","Alternative","Yes","Actual",,48,"Log Difference",1
+"anz_kktrans_ch","Credit Card Transactions, Swiss-Wide Frequency","SPA","ktzh","Alternative","Yes","Actual, in Thousands",,48,"Log Difference",1
+"ch.kof.inu.ng08.fx.q_ql_ass_bs.balance.d11","Business Situation Assessment, Manufacturing","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.bau.ng08.fx.q_ql_ass_bs.balance.d11","Business Situation Assessment, Construction","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.fvu.ng08.fx.q_ql_ass_bs.balance.d11","Business Situation Assessment, Finance & Insurance","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.aiu.ng08.fx.q_ql_ass_bs.balance.d11","Business Situation Assessment, Project Engineering","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.bts_total.ng08.fx.q_ql_ass_bs.balance.d11","Business Situation Assessment, All Industries","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.inu.ng08.fx.sector_mig.cap_gd.q_ql_ass_bs.balance.d11","Business Situation Assessment, Manufacturing Investment Goods ","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.inu.ng08.fx.sector_mig.cons_dr.q_ql_ass_bs.balance.d11","Business Situation Assessment, Manufacturing Durable Goods","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.inu.ng08.fx.sector_mig.cons_gd.q_ql_ass_bs.balance.d11","Business Situation Assessment, Manufacturing Consumption Goods","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.kof.inu.ng08.fx.sector_mig.imd_gd.q_ql_ass_bs.balance.d11","Business Situation Assessment, Manufacturing Intermediate Goods, ","KOF ","postgres","Survey","No","Net Balance",,12,"Log Difference",0
+"ch.seco.gdp.real.gdp.ssa","Gross Domestic Product, Adjusted for International Sport Events","SECO","postgres","Production","No","CHF, Real Prices",,4,"Log Difference",1
+"trendecon","Google Search Index, Perceived Economic Situation","trendEcon","trendEcon","Alternative","Yes","Index",,48,"Log Difference",0
+"Arbeitsmarkt","Google Search Index, Perceived Labour Market Situation","KOF","google_trends","Alternative","Yes","Index",,48,"Log Difference",0
+"traffic_PW","Passenger Car Frequency, Counting Stations on Major Swiss Motorways","ASTRA","ASTRA","Alternative","Yes","Actual",,48,"Log Difference",1
+"traffic_LW","Truck Frequency, Counting Stations on Major Swiss Motorways","ASTRA","ASTRA","Alternative","Yes","Actual",,48,"Log Difference",1
+"Lkw-Maut-Fahrleistungsindex_DE","Truck-Toll Mileage Index, Germany","Destatis","Destatis","Alternative","Yes","Actual",,48,"Log Difference",1
+"electricity_out","Energy Consumed by Swiss End Users","Swissgrid","swissgrid","Alternative","Yes","kWh",,48,"Detrended",1
+"electricity_in","Energy Production in Switzerland","Swissgrid","swissgrid","Alternative","Yes","kWh",,48,"Detrended",1
+"zrh_airport_departure","Total Flight Departures, Zurich Airport","Zurich Airport","Flughafen_ZH","Alternative","Yes","Actual",,48,"Log Difference",1
+"zrh_airport_arrivals","Total Flight Arrivals, Zurich Airport","Zurich Airport","Flughafen_ZH","Alternative","Yes","Actual",,48,"Log Difference",1
+"mobility_retail_and_recreation","Google COVID-19 Community Mobility Reports, Retail and Recreation","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
+"mobility_grocery_and_pharmacy","Google COVID-19 Community Mobility Reports, Grocery and Pharmacy","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
+"mobility_parks","Google COVID-19 Community Mobility Reports, Parks","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
+"mobility_transit_stations","Google COVID-19 Community Mobility Reports, Transit Stations","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
+"mobility_workplaces","Google COVID-19 Community Mobility Reports, Workplaces","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
+"mobility_residential","Google COVID-19 Community Mobility Reports, Residential","Google","Google","Alternative","Yes","Percentage",,48,"Log Difference",1
+"ch.ozd.e.wa.index.re.d11","Switzerland, Export: Total, Real, SA, Index (1997=100)","FOCBS","postgres","Trade","No","Index",,12,"Log Difference",1
+"ch.ozd.i.wa.index.re.d11","Switzerland, Import: Total, Real, SA, Index (1997=100)","FOCBS","postgres","Trade","No","Index",,12,"Log Difference",1
+"VIX","Volatility Index (VIX)","CBOE","macrobond","Financial","No","Index",,48,"None",0

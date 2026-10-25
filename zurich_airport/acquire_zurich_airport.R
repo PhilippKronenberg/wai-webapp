@@ -218,6 +218,75 @@ acquire_zurich_airport <- function() {
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
 
+# DAILY SERIES ------------------------------------------------------------
+#
+# Each bulletin has one page per runway with a DAILY table for its own month:
+# departures on runways 10, 16, 28, 32, 34 and arrivals on 14, 16, 28, 34. The
+# last value of each day's row is that runway's daily total; summed over the
+# runways they give the day's total departures and arrivals. These are IFR
+# flights (VFR has no runway tables): every month is checked against the
+# monthly IFR total of the movements table (Total minus VFR).
+
+runway_pages <- c(dep_10 = "Bisenstarts Piste 10", dep_16 = "Südabflüge Piste 16",
+                  dep_28 = "Westabflüge Piste 28", dep_32 = "Nordabflüge Piste 32",
+                  dep_34 = "Nordabflüge Piste 34", arr_14 = "Nordanflüge Piste 14",
+                  arr_16 = "Nordanflüge Piste 16", arr_28 = "Ostanflüge Piste 28",
+                  arr_34 = "Südanflüge Piste 34")
+daily_out <- file.path(script_dir, "zrh_flights_daily.csv")
+
+#' The daily runway tables of one bulletin, one column per runway
+parse_daily <- function(path, yymm) {
+  year <- 2000L + as.integer(substr(yymm, 1, 2)); month <- as.integer(substr(yymm, 3, 4))
+  first <- as.Date(sprintf("%d-%02d-01", year, month))
+  days <- seq(first, seq(first, by = "month", length.out = 2)[2] - 1, by = "day")
+  out <- data.frame(date = days)
+  for (pg in pdftools::pdf_text(path)) {
+    lines <- strsplit(pg, "\n", fixed = TRUE)[[1]]
+    title <- trimws(lines[nzchar(trimws(lines))][1])
+    id <- names(runway_pages)[runway_pages == title]
+    if (!length(id)) next
+    # day rows: "01.09   Di ..." (2026 on) or "1.09.25 Mo ..." (before)
+    rows <- grep("^\\s*[0-9]{1,2}[.][0-9]{2}([.][0-9]{2})?\\s+\\S{2}\\s", lines, value = TRUE)
+    tok <- strsplit(trimws(rows), "\\s+")
+    dp <- strsplit(vapply(tok, `[`, "", 1), ".", fixed = TRUE)
+    d <- as.Date(sprintf("%d-%02d-%02d", year, as.integer(vapply(dp, `[`, "", 2)),
+                         as.integer(vapply(dp, `[`, "", 1))))
+    v <- to_num(vapply(tok, function(t) t[length(t)], ""))
+    keep <- !is.na(d) & !is.na(v) & d %in% days         # 2501 repeats 1 January on an empty line
+    d <- d[keep]; v <- v[keep]
+    if (anyDuplicated(d)) stop(basename(path), ": ", title, " has two rows for a day", call. = FALSE)
+    out[[id]] <- v[match(days, d)]
+  }
+  miss <- setdiff(names(runway_pages), names(out))
+  if (length(miss)) stop(basename(path), ": runway tables not found: ", paste(miss, collapse = ", "), call. = FALSE)
+  if (anyNA(out[names(runway_pages)])) stop(basename(path), ": days missing in a runway table", call. = FALSE)
+  out$departures <- rowSums(out[grep("^dep_", names(out))])
+  out$arrivals <- rowSums(out[grep("^arr_", names(out))])
+  out$bulletin <- basename(path)
+  out[c("date", "departures", "arrivals", names(runway_pages), "bulletin")]
+}
+
+#' Daily series from every bulletin, checked against the monthly IFR totals
+acquire_daily <- function(monthly) {
+  b <- find_bulletins()
+  b <- b[!duplicated(b$yymm, fromLast = TRUE), ]          # a corrected bulletin (_korr) replaces its month
+  d <- do.call(rbind, lapply(seq_len(nrow(b)), function(i) parse_daily(file.path(pdf_dir, b$file[i]), b$yymm[i])))
+  if (anyDuplicated(d$date)) stop("a day is reported by two bulletins", call. = FALSE)
+  key <- format(d$date, "%Y-%m")
+  chk <- data.frame(key = sort(unique(key)),
+                    dep = as.numeric(tapply(d$departures, key, sum)), arr = as.numeric(tapply(d$arrivals, key, sum)))
+  m <- merge(chk, data.frame(key = format(monthly$date, "%Y-%m"), dep_ifr = monthly$departures_ifr,
+                             arr_ifr = monthly$arrivals_ifr), by = "key")
+  rel <- pmax(abs(m$dep / m$dep_ifr - 1), abs(m$arr / m$arr_ifr - 1))
+  if (any(rel > 0.01)) stop("daily sums differ from the monthly IFR totals by more than 1% in ",
+                            paste(m$key[rel > 0.01], collapse = ", "), call. = FALSE)
+  attr(d, "check") <- sprintf("%d of %d months equal the monthly IFR totals exactly%s", sum(rel == 0), nrow(m),
+                              if (any(rel > 0)) paste0("; within ", sprintf("%.2f%%", 100 * max(rel)), " in ",
+                                                       paste(m$key[rel > 0], collapse = ", ")) else "")
+  d[order(d$date), ]
+}
+
+
 # RUN ---------------------------------------------------------------------
 
 if (sys.nframe() == 0L) {
@@ -235,4 +304,9 @@ if (sys.nframe() == 0L) {
           sum(dat$revised), " month(s) revised between bulletins; ",
           length(attr(dat, "skipped")), " unreadable bulletin(s) skipped",
           if (length(attr(dat, "skipped"))) paste0(" (", paste(attr(dat, "skipped"), collapse = ", "), ")"))
+
+  daily <- acquire_daily(dat)
+  utils::write.csv(daily, daily_out, row.names = FALSE)
+  message("Wrote ", nrow(daily), " days (", format(min(daily$date)), " to ", format(max(daily$date)),
+          ") to ", daily_out, "; ", attr(daily, "check"))
 }

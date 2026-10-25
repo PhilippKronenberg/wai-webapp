@@ -19,8 +19,33 @@ Not to be confused with `zurich_air/`, which holds air-quality data.
 | file | |
 | --- | --- |
 | `acquire_zurich_airport.R` | scans the page, downloads new bulletins, parses them, writes the CSV (needs R and `pdftools`) |
-| `zrh_flights_monthly.csv` | output (columns below) |
+| `zrh_flights_monthly.csv` | monthly totals from the movements table (columns below) |
+| `zrh_flights_daily.csv` | **the WAI inputs**: daily `departures` and `arrivals`, the sums over the runway tables, plus one column per runway and the `bulletin` |
 | `pdf/` | cache of downloaded bulletins (gitignored) |
+
+## The daily series (`zrh_flights_daily.csv`)
+
+Each bulletin has one page per runway with a daily table for its month:
+departures on runways 10, 16, 28, 32 and 34 (Bisenstarts, Süd-, West- and
+Nordabflüge), and arrivals on 14, 16, 28 and 34 (Nord-, Ost- and
+Südanflüge). The last value of each day's row is that runway's daily total.
+Summed over the runways, they give the day's total departures and arrivals.
+The pages are found by their titles, since the table of contents counts pages
+differently from the PDF. Days are written `01.09` from 2026 and `1.09.25`
+before; both are read.
+
+These are **IFR** flights: VFR flights have no runway tables. Every month is
+checked against the movements table's monthly IFR total (Total minus VFR), and
+a deviation above 1% stops the run. First run (2026-10-25): 2,099 days,
+2021-01-01 to 2026-09-30. 66 of 69 months equal the monthly IFR totals
+exactly, the other 3 (2021-12, 2024-11, 2026-09) within 0.26%.
+
+Against `wai_ind`'s daily file (`Flughafen_ZH_daily_anfluege_abfluege.csv`),
+2021–2025: identical on **99.6%** of the 1,833 days. The 8 other days are
+errors in that file, with implausibly low values such as 22 departures where
+the bulletin shows 112. The dataset build (`dataset/`) uses this daily series
+from 2021 and `wai_ind`'s file for 2019–2020, which the bulletins do not
+cover.
 
 ```
 Rscript zurich_airport/acquire_zurich_airport.R
