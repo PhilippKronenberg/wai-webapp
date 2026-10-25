@@ -124,58 +124,118 @@ shipped_quarters <- function(path) {
   if (is.na(row)) character(0) else strsplit(row, ",", fixed = TRUE)[[1]][-1]
 }
 
-#' Append SECO's newest release when the real-time database lags behind it
-#'
-#' SECO adds a release to realtime-database.xlsx only some time after
-#' publishing it (2026-10: the database ended with the 2026-06-01 release
-#' while the 2026-09-03 release with 2026q2 was out). KOF's time-series
-#' database carries every SECO release openly, as ch.seco.gdp.real.gdp.sa
-#' (sheet gdp) and ch.seco.gdp.real.gdp.ssa (sheet gdp_cssa), in CHF. If its
-#' release is newer than the database's last one, it is appended as the next
-#' vintage (labelled by the quarter of its release date, as the database
-#' labels them). If KOF cannot be reached, the database alone is used.
-append_kof_release <- function(sheets) {
-  if (!requireNamespace("tsdbapi", quietly = TRUE)) {
-    message("tsdbapi not installed; no release newer than the database is appended")
+# The newest release, when the real-time database lags behind it ----------
+#
+# SECO adds a release to realtime-database.xlsx only some time after
+# publishing it (2026-10: the database ended with the 2026-06-01 release
+# while the 2026-09-03 release with 2026q2 was out). SECO publishes the
+# current release machine-readably (feed on scheduler.swissdatas.ch, with
+# SECO's own R example): one CSV with every series (structure, type, seas_adj,
+# date, value) and a JSON with metadata. Real GDP is structure "gdp", type
+# "real", in CHF million, the database's unit: seas_adj "csa" (seasonally and
+# calendar adjusted) -> sheet gdp, "cssa" (also sport-event adjusted) ->
+# sheet gdp_cssa, the WAI target. Its values equal the release's workbooks on
+# SECO's GDP page (qna_e_csa.xlsx, qna_e_cssa.xlsx) to 1e-14.
+#
+# Release date: the date SECO's GDP page prints next to the release's files
+# (3 September 2026 for 2026q2), which is how the database dates its
+# vintages (05.09.2022, 04.09.2023, 03.09.2024). The feed's `updated_utc`
+# (2026-08-28 for the same release) is earlier and used only if the page
+# cannot be read. If the feed fails, KOF's public time-series database
+# carries the same release (identical to 1e-14 on 2026-10-26).
+
+seco_csv  <- "https://scheduler.swissdatas.ch/scheduled/ch-seco-gdp.csv"
+seco_json <- "https://scheduler.swissdatas.ch/scheduled/ch-seco-gdp.json"
+seco_page <- "https://www.seco.admin.ch/de/bruttoinlandprodukt"
+seco_adj  <- c(gdp = "csa", gdp_cssa = "cssa")
+months_de <- c(Januar = 1, Februar = 2, "März" = 3, April = 4, Mai = 5, Juni = 6, Juli = 7,
+               August = 8, September = 9, Oktober = 10, November = 11, Dezember = 12)
+
+#' Release date printed on SECO's GDP page next to the sport-adjusted file
+seco_page_date <- function() {
+  page <- tempfile(fileext = ".html")
+  utils::download.file(seco_page, page, quiet = TRUE,
+                       headers = c(`User-Agent` = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"))
+  html <- paste(readLines(page, warn = FALSE, encoding = "UTF-8"), collapse = " ")
+  hit <- regexpr("qna_e_cssa[.]xlsx", html)
+  if (hit < 0) stop("qna_e_cssa.xlsx not linked on ", seco_page, call. = FALSE)
+  after <- gsub("<[^>]+>", " ", substr(html, hit, hit + 3000))     # the link's label and date follow it
+  d <- regmatches(after, regexpr(paste0("[0-9]{1,2}[.] (", paste(names(months_de), collapse = "|"), ") [0-9]{4}"), after))
+  if (!length(d)) stop("no release date next to qna_e_cssa.xlsx", call. = FALSE)
+  p <- strsplit(sub(".", "", d, fixed = TRUE), " ")[[1]]
+  as.Date(sprintf("%s-%02d-%02d", p[3], months_de[[p[2]]], as.integer(p[1])))
+}
+
+#' SECO's current release: list(released, source, series = list(gdp =, gdp_cssa =) of data.frame(date, v))
+seco_release <- function() {
+  x <- utils::read.csv(seco_csv, stringsAsFactors = FALSE)
+  if (!all(c("structure", "type", "seas_adj", "date", "value") %in% names(x))) {
+    stop("unexpected columns in ", seco_csv, call. = FALSE)
+  }
+  series <- lapply(seco_adj, function(a) {
+    g <- x[x$structure == "gdp" & x$type == "real" & x$seas_adj == a, ]
+    if (!nrow(g)) stop("no real GDP (", a, ") in ", seco_csv, call. = FALSE)
+    data.frame(date = as.Date(g$date), v = as.numeric(g$value))
+  })
+  released <- tryCatch(seco_page_date(), error = function(e) {
+    meta <- jsonlite::fromJSON(seco_json, simplifyVector = FALSE)
+    message("release date not readable on SECO's page (", conditionMessage(e), "); using the feed's updated_utc")
+    as.Date(substr(meta$updated_utc, 1, 10))
+  })
+  list(released = released, source = "SECO (machine-readable feed)", series = series)
+}
+
+#' Fallback: the same release from KOF's public time-series database (in CHF)
+kof_release <- function() {
+  if (!requireNamespace("tsdbapi", quietly = TRUE)) stop("tsdbapi not installed", call. = FALSE)
+  keys <- c(gdp = "ch.seco.gdp.real.gdp.sa", gdp_cssa = "ch.seco.gdp.real.gdp.ssa")
+  tsdbapi::set_config(access_type = "public")
+  ts <- tsdbapi::read_ts(unname(keys)); rel <- tsdbapi::read_ts_release(unname(keys))
+  series <- lapply(keys, function(k) {
+    tt <- as.numeric(stats::time(ts[[k]]))
+    data.frame(date = as.Date(sprintf("%d-%02d-01", floor(tt + 1e-6), round((tt - floor(tt + 1e-6)) * 4) * 3 + 1)),
+               v = as.numeric(ts[[k]]) / 1e6)              # CHF -> CHF million, as the database
+  })
+  list(released = max(as.Date(rel$vintage_date)), source = "KOF (ch.seco.gdp.real.gdp.sa/ssa)", series = series)
+}
+
+#' Append a release as the next vintage if it is newer than the database's last
+append_release <- function(sheets, rel) {
+  last_rel <- max(sheets$gdp$released, na.rm = TRUE)
+  if (is.na(rel$released) || rel$released <= last_rel) {
+    message(sprintf("  %s release of %s is not newer than the database's (%s); nothing appended",
+                    rel$source, format(rel$released), format(last_rel)))
     return(sheets)
   }
-  keys <- c(gdp = "ch.seco.gdp.real.gdp.sa", gdp_cssa = "ch.seco.gdp.real.gdp.ssa")
-  got <- tryCatch({
-    tsdbapi::set_config(access_type = "public")
-    list(ts = tsdbapi::read_ts(unname(keys)), rel = tsdbapi::read_ts_release(unname(keys)))
-  }, error = function(e) { message("KOF not reachable (", conditionMessage(e), "); database only"); NULL })
-  if (is.null(got)) return(sheets)
-  last_rel <- max(sheets$gdp$released, na.rm = TRUE)          # the database's, before appending
-  for (s in names(keys)) {
-    v <- sheets[[s]]
-    rel_date <- as.Date(got$rel$vintage_date[got$rel$ts_key == keys[[s]]])
-    if (!length(rel_date) || is.na(rel_date) || rel_date <= last_rel) {
-      message(sprintf("  %s: KOF's release (%s) is not newer than the database's (%s); nothing appended",
-                      s, format(rel_date), format(last_rel)))
-      next
+  label <- sprintf("%sq%d", format(rel$released, "%Y"), (as.integer(format(rel$released, "%m")) - 1) %/% 3 + 1)
+  qn <- function(q) as.integer(substr(q, 1, 4)) * 4L + as.integer(substr(q, 6, 6))
+  for (s in names(seco_adj)) {
+    v <- sheets[[s]]; x <- rel$series[[s]]
+    if (qn(label) != qn(utils::tail(v$quarters, 1)) + 1L) {
+      stop(s, ": the release of ", rel$released, " would be vintage ", label, ", not the one after ",
+           utils::tail(v$quarters, 1), call. = FALSE)
     }
-    label <- sprintf("%sq%d", format(rel_date, "%Y"), (as.integer(format(rel_date, "%m")) - 1) %/% 3 + 1)
-    last_q <- utils::tail(v$quarters, 1)
-    qn <- function(q) as.integer(substr(q, 1, 4)) * 4L + as.integer(substr(q, 6, 6))
-    if (qn(label) != qn(last_q) + 1L) {
-      stop(s, ": KOF's release of ", rel_date, " would be vintage ", label, ", not the one after ", last_q,
-           call. = FALSE)
-    }
-    x <- got$ts[[keys[[s]]]]
-    tt <- as.numeric(stats::time(x))
-    xd <- as.Date(sprintf("%d-%02d-01", floor(tt + 1e-6), round((tt - floor(tt + 1e-6)) * 4) * 3 + 1))
-    xv <- as.numeric(x) / 1e6                                  # CHF -> CHF million, as the database
-    new_time <- sort(union(v$time, xd))
+    new_time <- sort(union(v$time, x$date))
     v$levels <- lapply(v$levels, function(col) col[match(new_time, v$time)])
-    v$levels[[label]] <- xv[match(new_time, xd)]
+    v$levels[[label]] <- x$v[match(new_time, x$date)]
     v$time <- new_time
     v$quarters <- c(v$quarters, label)
-    v$released <- c(v$released, rel_date)
+    v$released <- c(v$released, rel$released)
     sheets[[s]] <- v
-    message(sprintf("  %s: appended SECO's release of %s from KOF (%s) as vintage %s, to %s",
-                    s, rel_date, keys[[s]], label, format(max(xd))))
+    message(sprintf("  %s: appended the release of %s from %s as vintage %s, to %s",
+                    s, rel$released, rel$source, label, format(max(x$date))))
   }
   sheets
+}
+
+#' The newest release: SECO first, KOF if SECO's page cannot be read
+append_latest_release <- function(sheets) {
+  rel <- tryCatch(seco_release(), error = function(e) {
+    message("SECO's GDP page not readable (", conditionMessage(e), "); trying KOF")
+    tryCatch(kof_release(), error = function(e2) {
+      message("KOF not reachable either (", conditionMessage(e2), "); database only"); NULL })
+  })
+  if (is.null(rel)) sheets else append_release(sheets, rel)
 }
 
 build_realtime_gdp <- function(workbook = NULL, url = source_url, dir = out_dir) {
@@ -190,9 +250,9 @@ build_realtime_gdp <- function(workbook = NULL, url = source_url, dir = out_dir)
   if (!identical(sheets$gdp$quarters, sheets$gdp_cssa$quarters)) {
     stop("the 'gdp' and 'gdp_cssa' sheets disagree on their vintages", call. = FALSE)
   }
-  sheets <- append_kof_release(sheets)
+  sheets <- append_latest_release(sheets)
   if (!identical(sheets$gdp$quarters, sheets$gdp_cssa$quarters)) {
-    stop("after appending KOF's release, the two files disagree on their vintages", call. = FALSE)
+    stop("after appending the latest release, the two files disagree on their vintages", call. = FALSE)
   }
 
   # Check everything before writing anything.
