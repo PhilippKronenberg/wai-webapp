@@ -56,7 +56,14 @@ owner      <- "kphilipp"
 locale     <- "en"
 
 # The CSVs land next to this script; see kof/.gitignore before committing them.
-default_out_dir <- "kof"
+# Resolved from the script's own path, not the working directory: the first
+# real run (2026-10-25) was started from inside kof/, and a relative "kof"
+# then wrote to kof/kof/.
+script_dir <- local({
+  f <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE))
+  if (length(f)) dirname(normalizePath(f[1], mustWork = FALSE)) else "kof"
+})
+default_out_dir <- script_dir
 
 
 # HELPERS -----------------------------------------------------------------

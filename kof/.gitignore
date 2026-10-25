@@ -5,3 +5,9 @@
 kof_series.csv
 kof_metadata.csv
 kof_release.csv
+
+# An R session started in this folder (as the first real run was) writes its
+# command history here, and a session that set up KOF credentials would carry
+# them in it. Never publish it.
+.Rhistory
+.RData

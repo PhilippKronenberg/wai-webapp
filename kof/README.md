@@ -58,6 +58,15 @@ Rscript kof/acquire_kof.R <output_dir> 2026-01-15 # the vintage valid on a past 
   and `date` is the first day of the period. Irregular or daily series, which
   `tsdbapi` returns as `xts`, have an empty `frequency` and their own dates.
 - Missing values inside a series' range are omitted, not written as zero.
+- **The values are KOF's balances as published, which can be negative.**
+  mfbdfm's raw dataset stores the same series shifted by +100, so that its
+  `diff(log(x))` transformation is defined. Add 100 before comparing with, or
+  feeding into, that dataset. Checked 2026-10-25: with the shift, the 9
+  series match mfbdfm's April 2026 raw data to a median absolute difference of
+  0.01–0.09 points, against series standard deviations of 9–30. The larger
+  differences, 1–4 points on average, sit in the most recent year. They are
+  seasonal-adjustment revisions (`d11`): KOF re-estimates the seasonal factors
+  each month and revises recent history.
 - `valid_on` selects a vintage. For external users KOF shows a vintage only
   once it has been released, usually a few days after its vintage date.
 
