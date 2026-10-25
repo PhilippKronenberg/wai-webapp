@@ -69,6 +69,14 @@ series <- list(
   ktzh_credit_card_transactions_swiss = list(
     name = "Credit Card Transactions, Swiss-Wide Scaled Value",
     keep = function(x) x$method == "Credit" & x$Channel %in% c("E-comm", "POS")
+  ),
+  # The WAI input anz_kktrans_ch counts credit-card transactions (SPA, 2020
+  # only). The Worldline count matches it: weekly log changes correlate 0.977
+  # over the 52 weeks of 2020, against 0.905 for turnover.
+  anz_kktrans_ch = list(
+    name = "Credit Card Transactions, Swiss-Wide Scaled Number of Transactions",
+    keep = function(x) x$method == "Credit" & x$Channel %in% c("E-comm", "POS"),
+    measure = "count"
   )
 )
 
@@ -86,13 +94,16 @@ download_share_file <- function(file, dest) {
 #' Read ACQ_Transaction_Type.csv and check it is what the rules expect
 read_acquiring <- function(path) {
   x <- utils::read.csv(path, check.names = FALSE, stringsAsFactors = FALSE)
-  need <- c("Date", "Payment method", "Cardholder origin", "Channel", "Scaled Value")
+  need <- c("Date", "Payment method", "Cardholder origin", "Channel", "Scaled Value",
+            "Scaled Number of Transactions")
   miss <- setdiff(need, names(x))
   if (length(miss)) stop("missing columns in ", source_file, ": ", paste(miss, collapse = ", "))
   x$method <- x[["Payment method"]]
   x$origin <- x[["Cardholder origin"]]
   x$value <- suppressWarnings(as.numeric(x[["Scaled Value"]]))
   x$value[is.na(x$value)] <- 0           # as the JS builder: missing counts as 0
+  x$count <- suppressWarnings(as.numeric(x[["Scaled Number of Transactions"]]))
+  x$count[is.na(x$count)] <- 0
   x$Date <- as.Date(x$Date)
   if (anyNA(x$Date)) stop("unparseable dates in ", source_file)
 
@@ -107,9 +118,9 @@ read_acquiring <- function(path) {
 }
 
 #' Daily sum of the rows a rule keeps, over every date in the file
-daily_sum <- function(x, keep) {
+daily_sum <- function(x, keep, measure = "value") {
   dates <- sort(unique(x$Date))
-  s <- tapply(x$value[keep(x)], x$Date[keep(x)], sum)
+  s <- tapply(x[[measure]][keep(x)], x$Date[keep(x)], sum)
   out <- stats::setNames(rep(0, length(dates)), as.character(dates))
   out[names(s)] <- s
   data.frame(date = dates, value = unname(out))
@@ -151,7 +162,7 @@ message(source_file, ": ", nrow(x), " rows, ", min(x$Date), " to ", last)
 if (Sys.Date() - last > 21) stop("newest date ", last, " is more than 21 days old")
 
 for (id in names(series)) {
-  d <- daily_sum(x, series[[id]]$keep)
+  d <- daily_sum(x, series[[id]]$keep, if (is.null(series[[id]]$measure)) "value" else series[[id]]$measure)
   out <- file.path(script_dir, paste0(id, ".csv"))
   write_ktzh(d, series[[id]]$name, out)
   message("wrote ", out, " (", nrow(d), " days)")

@@ -7,7 +7,8 @@ the dashboard. These are inputs to
 | file | WAI input | rule |
 | --- | --- | --- |
 | `ktzh_non_online_retail.csv` | `stat_einkauf` | `Channel == POS`, summed over every payment method and cardholder origin |
-| `ktzh_credit_card_transactions_swiss.csv` | none yet (candidate for `anz_kktrans_ch`, see below) | `Payment method == Credit`, `Channel` E-comm + POS, summed over cardholder origins |
+| `ktzh_credit_card_transactions_swiss.csv` | none | `Payment method == Credit`, `Channel` E-comm + POS, summed over cardholder origins |
+| `anz_kktrans_ch.csv` | `anz_kktrans_ch` | as the credit series, but `Scaled Number of Transactions`: a count, like the SPA series it replaces (see below) |
 | `worldline_daily.csv` | none | the full table of the original builder: credit, POS, and domestic/foreign × credit/debit |
 
 The rules are those of `create_swiss_consumption_time_series.js` in `wai_ind`
@@ -59,11 +60,19 @@ around 1e-4).
 2026-02-08, is now 25% (retail) and 37% (credit) higher. The days before it
 are 1–3% higher. Expect the last few days of every update to be revised up.
 
-## `anz_kktrans_ch` is a different series
+## `anz_kktrans_ch` switched to Worldline
 
-`anz_kktrans_ch` (Swiss Payment Association, weekly number of credit-card
-transactions, thousands) covers only 2020 in `wai_ind`. The Worldline credit
-series here is daily and current, and measures turnover, not counts. Whether
-it should replace `anz_kktrans_ch` is a modelling decision.
-`ACQ_Transaction_Type.csv` also has `Scaled Number of Transactions` if counts
-are wanted.
+`anz_kktrans_ch` was the Swiss Payment Association's weekly number of
+credit-card transactions, available in `wai_ind` for 2020 only. It now comes
+from Worldline: the daily number of credit-card transactions (POS and
+e-commerce, all cardholder origins), `anz_kktrans_ch.csv`. Weekly sums of the
+Worldline series against SPA over the 52 weeks of 2020:
+
+| Worldline measure | level correlation | weekly log-change correlation |
+| --- | --- | --- |
+| number of transactions (used) | 0.975 | 0.977 |
+| turnover (`Scaled Value`) | 0.897 | 0.905 |
+
+The units differ: an index of January 2020 average daily transactions,
+against thousands of transactions. The model uses log changes, so only the
+dynamics matter.
