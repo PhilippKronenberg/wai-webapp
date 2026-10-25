@@ -200,12 +200,26 @@ acquire_kof <- function(mode = c("public", "private"), valid_on = Sys.Date()) {
             "and were skipped; run with --private for all of them")
   }
 
+  message("  the API returned ", length(tsl), " series: ", paste(names(tsl), collapse = ", "))
   obs <- do.call(rbind, Map(series_to_long, tsl, names(tsl)))
   rownames(obs) <- NULL
+  # A series whose values are all missing in this vintage leaves no row in
+  # obs; say so instead of letting it vanish.
+  empty <- setdiff(names(tsl), unique(obs$key))
+  if (length(empty)) {
+    warning(length(empty), " series returned with no values (all missing in the vintage valid on ",
+            format(valid_on), "): ", paste(empty, collapse = ", "), call. = FALSE)
+  }
 
   md <- tsdbapi::read_collection_ts_metadata(collection, owner = owner, locale = locale,
                                              ignore_missing = lenient)
   meta <- flatten_metadata(md)
+  # Series the collection lists (metadata) but the data call did not return.
+  not_returned <- setdiff(meta$key, names(tsl))
+  if (length(not_returned)) {
+    warning(length(not_returned), " series are in the collection's metadata but were not returned ",
+            "as data: ", paste(not_returned, collapse = ", "), call. = FALSE)
+  }
   missing_meta <- setdiff(names(tsl), meta$key)
   if (length(missing_meta)) {
     warning(length(missing_meta), " series without metadata: ",
