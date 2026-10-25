@@ -124,6 +124,60 @@ shipped_quarters <- function(path) {
   if (is.na(row)) character(0) else strsplit(row, ",", fixed = TRUE)[[1]][-1]
 }
 
+#' Append SECO's newest release when the real-time database lags behind it
+#'
+#' SECO adds a release to realtime-database.xlsx only some time after
+#' publishing it (2026-10: the database ended with the 2026-06-01 release
+#' while the 2026-09-03 release with 2026q2 was out). KOF's time-series
+#' database carries every SECO release openly, as ch.seco.gdp.real.gdp.sa
+#' (sheet gdp) and ch.seco.gdp.real.gdp.ssa (sheet gdp_cssa), in CHF. If its
+#' release is newer than the database's last one, it is appended as the next
+#' vintage (labelled by the quarter of its release date, as the database
+#' labels them). If KOF cannot be reached, the database alone is used.
+append_kof_release <- function(sheets) {
+  if (!requireNamespace("tsdbapi", quietly = TRUE)) {
+    message("tsdbapi not installed; no release newer than the database is appended")
+    return(sheets)
+  }
+  keys <- c(gdp = "ch.seco.gdp.real.gdp.sa", gdp_cssa = "ch.seco.gdp.real.gdp.ssa")
+  got <- tryCatch({
+    tsdbapi::set_config(access_type = "public")
+    list(ts = tsdbapi::read_ts(unname(keys)), rel = tsdbapi::read_ts_release(unname(keys)))
+  }, error = function(e) { message("KOF not reachable (", conditionMessage(e), "); database only"); NULL })
+  if (is.null(got)) return(sheets)
+  last_rel <- max(sheets$gdp$released, na.rm = TRUE)          # the database's, before appending
+  for (s in names(keys)) {
+    v <- sheets[[s]]
+    rel_date <- as.Date(got$rel$vintage_date[got$rel$ts_key == keys[[s]]])
+    if (!length(rel_date) || is.na(rel_date) || rel_date <= last_rel) {
+      message(sprintf("  %s: KOF's release (%s) is not newer than the database's (%s); nothing appended",
+                      s, format(rel_date), format(last_rel)))
+      next
+    }
+    label <- sprintf("%sq%d", format(rel_date, "%Y"), (as.integer(format(rel_date, "%m")) - 1) %/% 3 + 1)
+    last_q <- utils::tail(v$quarters, 1)
+    qn <- function(q) as.integer(substr(q, 1, 4)) * 4L + as.integer(substr(q, 6, 6))
+    if (qn(label) != qn(last_q) + 1L) {
+      stop(s, ": KOF's release of ", rel_date, " would be vintage ", label, ", not the one after ", last_q,
+           call. = FALSE)
+    }
+    x <- got$ts[[keys[[s]]]]
+    tt <- as.numeric(stats::time(x))
+    xd <- as.Date(sprintf("%d-%02d-01", floor(tt + 1e-6), round((tt - floor(tt + 1e-6)) * 4) * 3 + 1))
+    xv <- as.numeric(x) / 1e6                                  # CHF -> CHF million, as the database
+    new_time <- sort(union(v$time, xd))
+    v$levels <- lapply(v$levels, function(col) col[match(new_time, v$time)])
+    v$levels[[label]] <- xv[match(new_time, xd)]
+    v$time <- new_time
+    v$quarters <- c(v$quarters, label)
+    v$released <- c(v$released, rel_date)
+    sheets[[s]] <- v
+    message(sprintf("  %s: appended SECO's release of %s from KOF (%s) as vintage %s, to %s",
+                    s, rel_date, keys[[s]], label, format(max(xd))))
+  }
+  sheets
+}
+
 build_realtime_gdp <- function(workbook = NULL, url = source_url, dir = out_dir) {
   if (is.null(workbook)) {
     workbook <- tempfile(fileext = ".xlsx")
@@ -135,6 +189,10 @@ build_realtime_gdp <- function(workbook = NULL, url = source_url, dir = out_dir)
                    function(s) read_vintage_sheet(workbook, s, need_dates = s == "gdp"))
   if (!identical(sheets$gdp$quarters, sheets$gdp_cssa$quarters)) {
     stop("the 'gdp' and 'gdp_cssa' sheets disagree on their vintages", call. = FALSE)
+  }
+  sheets <- append_kof_release(sheets)
+  if (!identical(sheets$gdp$quarters, sheets$gdp_cssa$quarters)) {
+    stop("after appending KOF's release, the two files disagree on their vintages", call. = FALSE)
   }
 
   # Check everything before writing anything.

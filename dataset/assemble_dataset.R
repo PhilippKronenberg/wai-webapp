@@ -191,24 +191,25 @@ copy_as(p("destatis_maut", "Destatis_Truck_toll_mileage.csv"), "Destatis_Truck_t
         "pipeline", date_format = "%d.%m.%Y", sep = ";")
 copy_as(p("swissgrid", "swissgrid_daily.csv"), "swissgrid_2009_2025.csv", "swissgrid", "pipeline")
 
-# 18. Flughafen_ZH_daily_anfluege_abfluege.csv: wai_ind's daily file (to its
-# end), continued with the monthly IFR totals of the noise bulletins spread
-# evenly over the days of each month. The continuation carries monthly
-# information only.
-ad <- utils::read.csv(file.path(old, "Flughafen_ZH_daily_anfluege_abfluege.csv"))
-ad$date <- as.Date(ad$date)
+# 18. Flughafen_ZH_monthly_anfluege_abfluege.csv: monthly IFR arrivals and
+# departures from the noise bulletins (zurich_airport/, from 2020-01). The
+# prep seasonally adjusts them as before, now at monthly frequency. The
+# bulletins start in 2020-01, so the 12 months of 2019 are taken from
+# wai_ind's daily file, summed per month (it matched the bulletins' IFR counts
+# in 65 of 72 months); without them the series would open with the COVID
+# collapse and leave no pre-COVID year for the seasonal adjustment.
 zm <- utils::read.csv(need(p("zurich_airport", "zrh_flights_monthly.csv")))
 zm$date <- as.Date(zm$date)
-zm <- zm[zm$date > max(ad$date), ]
-cont <- do.call(rbind, lapply(seq_len(nrow(zm)), function(i) {
-  days <- seq(zm$date[i], seq(zm$date[i], by = "month", length.out = 2)[2] - 1, by = "day")
-  data.frame(date = days, total_anfluege = zm$arrivals_ifr[i] / length(days),
-             total_abfluege = zm$departures_ifr[i] / length(days))
-}))
-air <- rbind(ad[, c("date", "total_anfluege", "total_abfluege")], cont)
-utils::write.csv(air, file.path(out, "Flughafen_ZH_daily_anfluege_abfluege.csv"), row.names = FALSE)
-note("Flughafen_ZH_daily_anfluege_abfluege.csv", "wai_ind daily + zurich_airport monthly", "pipeline", air$date,
-     sprintf("daily to %s, then monthly IFR spread over days", max(ad$date)))
+ad <- utils::read.csv(file.path(old, "Flughafen_ZH_daily_anfluege_abfluege.csv"))
+ad$date <- as.Date(ad$date)
+ad <- ad[ad$date < min(zm$date), ]
+pre <- stats::aggregate(ad[c("total_anfluege", "total_abfluege")], by = list(date = format(ad$date, "%Y-%m-01")), FUN = sum)
+air <- rbind(data.frame(date = as.Date(pre$date), total_anfluege = pre$total_anfluege, total_abfluege = pre$total_abfluege),
+             data.frame(date = zm$date, total_anfluege = zm$arrivals_ifr, total_abfluege = zm$departures_ifr))
+air <- air[order(air$date), ]
+utils::write.csv(air, file.path(out, "Flughafen_ZH_monthly_anfluege_abfluege.csv"), row.names = FALSE)
+note("Flughafen_ZH_monthly_anfluege_abfluege.csv", "zurich_airport (+ wai_ind daily for 2019)", "pipeline", air$date,
+     sprintf("monthly IFR from the bulletins from %s; %d months before from wai_ind's daily file", min(zm$date), nrow(pre)))
 
 # 19. Google mobility: final file
 copy_as(p("google_mobility", "Switzerland_Mobility_Report_total.csv"), "Google_Switzerland_Mobility_Report_total.csv",

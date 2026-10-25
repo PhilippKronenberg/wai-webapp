@@ -28,6 +28,12 @@ out_file <- file.path(dirname(new_file), "..", "comparison.csv")
 load_dat <- function(f) { e <- new.env(); load(f, envir = e); c(e$dat$flows, e$dat$stocks) }
 new <- load_dat(new_file)
 old <- load_dat(old_file)
+# The harmonised levels before transformation, for series whose frequency
+# changed: data_ch_dataset_raw_new.Rda, and the baseline built from wai_ind's
+# inputs (data_ch_dataset_raw_old.Rda, which reproduces the model's input).
+load_raw <- function(f) { if (!file.exists(f)) return(list()); e <- new.env(); load(f, envir = e); e$dat_raw }
+new_raw <- load_raw(file.path(dirname(new_file), "data_ch_dataset_raw_new.Rda"))
+old_raw <- load_raw(file.path(dirname(new_file), "data_ch_dataset_raw_old.Rda"))
 meta <- utils::read.csv(file.path("dataset", "data_meta.csv"), stringsAsFactors = FALSE)
 
 tdate <- function(x) {                       # end date of a ts, as a Date
@@ -43,6 +49,24 @@ rows <- lapply(union(names(old), names(new)), function(k) {
                      new_end = if (is.null(b)) NA else format(tdate(b)), stringsAsFactors = FALSE)
   if (is.null(b)) { base$status <- "missing"; return(base) }
   if (is.null(a)) { base$status <- "new"; return(base) }
+  if (stats::frequency(a) != stats::frequency(b)) {
+    # Frequency changed (e.g. weekly -> monthly): compare quarter-on-quarter
+    # log changes of the quarterly means of the harmonised levels (the prep's
+    # raw stage), since transformed values at different frequencies do not
+    # aggregate to the same quarterly change.
+    ra <- old_raw[[k]]; rb <- new_raw[[k]]
+    to_q <- function(x) {
+      tt <- as.numeric(stats::time(x)); q <- floor(tt * 4 + 1e-6) / 4
+      s <- tapply(as.numeric(x), q, mean); n <- tapply(!is.na(as.numeric(x)), q, sum)
+      s <- s[n == stats::frequency(x) / 4]
+      first <- as.numeric(names(s)[1])
+      stats::ts(c(NA, diff(log(as.numeric(s)))), start = c(floor(first + 1e-6), round((first %% 1) * 4) + 1), frequency = 4)
+    }
+    base$name <- paste0(base$name, " [frequency ", stats::frequency(a), " -> ", stats::frequency(b),
+                        ", compared as quarterly changes]")
+    if (is.null(ra) || is.null(rb)) { base$status <- "different"; return(base) }
+    a <- to_q(ra); b <- to_q(rb)
+  }
   u <- stats::ts.intersect(a, b)
   ok <- stats::complete.cases(u)
   x <- as.numeric(u[ok, 1]); y <- as.numeric(u[ok, 2])
