@@ -88,6 +88,22 @@ codelists do not describe, so the two files cannot drift apart.
   is not published, i.e. suppressed) and 11,945 status `M` (the value cannot
   exist). Neither is a zero and neither is in the file.
 
+## The WAI input `ch.fso.rtt.ind.r.noga0801.sa`
+
+The WAI's retail-sales input (real, seasonally adjusted, from KOF's
+database) is this file's `noga == "47"`, `adjustment == "Y"`,
+`indicator == "PTOT"`, `measure == "IX"`: total retail, calendar and
+seasonally adjusted, real, 2021 = 100.
+
+Checked 2026-10-25 on the 313 common months, 2000-01 to 2026-01: same base,
+monthly log changes correlate 0.999 and annual ones 1.000, and the level
+differs by at most 1%. The differences are BFS revisions of the seasonal
+adjustment, 0.01–0.16 index points on average per year, and 1.0 point for
+the old file's last month (2026-01). Here the series runs to 2026-08. The
+other variants match far worse: without petrol stations (`47x473`) annual
+growth correlates 0.992, nominal (`UTOT`) 0.946, and the unadjusted and
+calendar-adjusted ones only 0.32 month to month.
+
 ## Caveats that matter before modelling on this
 
 - **The last month differs by branch.** Retail (`47` and its 18 sub-codes) runs
