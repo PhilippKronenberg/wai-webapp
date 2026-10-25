@@ -1,0 +1,7 @@
+# The KOF collection may contain series KOF does not license for
+# redistribution, and this repository is public. Keep the downloaded data out
+# of git until it is confirmed which series may be published; then remove the
+# lines for the files that may (see kof/README.md and the issue).
+kof_series.csv
+kof_metadata.csv
+kof_release.csv
