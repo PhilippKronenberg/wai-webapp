@@ -41,6 +41,7 @@ points).
 | file | |
 | --- | --- |
 | `acquire_kof.R` | downloads the collection and writes the CSVs (needs R, `tsdbapi`, `zoo`, `lubridate`) |
+| `acquire_kof_loggedin.R` | the private mode with your own KOF login (OAuth in the browser) instead of an API key; interactive only |
 | `<mode>/kof_series.csv` | `key, date, value, frequency`, one row per observation; `date` is the first day of the period |
 | `<mode>/kof_metadata.csv` | one row per series, nested metadata flattened to `parent.child` columns |
 | `<mode>/kof_release.csv` | vintage date, release time and `released` per series |
@@ -70,6 +71,18 @@ For unattended private runs, create a key once, interactively, with
 `tsdbapi::create_user_api_key()` (this invalidates any older key). Put
 `TSDBAPI_API_KEY=<key>` in `~/.Renviron` and **never commit it**. Without a
 key, `--private` stops with that instruction instead of waiting on a login.
+
+To use your own KOF login instead of a key, run this in an interactive
+session (RStudio) from the repository root:
+
+```r
+source("kof/acquire_kof_loggedin.R")
+```
+
+It signs in through the browser (tsdbapi `access_type = "auth"`, OAuth) and
+otherwise runs `acquire_kof.R`'s private mode unchanged, into `kof/private/`.
+Set `kof_valid_on` or `kof_out_dir` before sourcing to change the vintage or
+the folder.
 
 ## Reading the CSV
 
