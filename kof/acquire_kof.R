@@ -5,8 +5,8 @@
 # Acquire the KOF series of the `mfbdfm` collection (wai-webapp, "KOF Data
 # pipeline")
 #
-# Downloads every time series in the KOF Time Series Database collection
-# `mfbdfm` (owner `kphilipp`), curated on the KOF TS Explorer:
+# Downloads the time series of the KOF Time Series Database collection
+# `mfbdfm`, curated on the KOF TS Explorer:
 #   https://ts-explorer.kof.ethz.ch/collections?collection=mfbdfm
 # and writes them out as tidy CSVs: the observations, the metadata, and the
 # vintage/release information of what was downloaded.
@@ -17,34 +17,39 @@
 #   https://github.com/KOF-ch/tsdbapi-R  (not on CRAN; see below)
 #   Publisher   KOF Swiss Economic Institute, ETH Zurich
 #
-# Authentication -- the one thing that differs from the other pipelines
-#   The collection belongs to a KOF user, so reading it needs that user's
-#   credentials. Interactively, tsdbapi opens KOF's login page. A scheduled or
-#   otherwise non-interactive run cannot log in, and needs an API key in the
-#   environment variable TSDBAPI_API_KEY (tsdbapi reads it automatically):
+# Two modes -- the same collection, kept by two accounts
 #
-#     api_key <- tsdbapi::create_user_api_key()   # once, interactively;
-#                                                 # invalidates any older key
+#   public (default)  The copy kept by an open account, read with
+#                     access_type = "public": no login, no key, so it runs
+#                     unattended anywhere. It sees only series KOF has made
+#                     public (5 of the 9 on 2026-10-25; the four manufacturing
+#                     sub-sector series are not) and only RELEASED vintages.
+#                     Writes to kof/public/.
 #
-#   NEVER commit the key. Put it in ~/.Renviron (TSDBAPI_API_KEY=...) or, for a
-#   GitHub Actions run, in a repository secret. Without a key, a
-#   non-interactive run stops here with that instruction rather than hanging
-#   on a login prompt nobody can answer.
+#   private           The copy kept by `kphilipp`, read as that user: all
+#   (--private)       series, and vintages that are not yet released (on
+#                     2026-10-25 it already held October, due for release on
+#                     4 Nov). That is what makes it worth having for
+#                     nowcasting, and also why its output must NEVER be
+#                     published: it is written to kof/private/, which git
+#                     ignores, and the run warns when it holds pre-release data.
+#                     Needs a login (interactive) or TSDBAPI_API_KEY (created
+#                     once with tsdbapi::create_user_api_key(); keep it in
+#                     ~/.Renviron, never commit it).
 #
-# Redistribution -- read before committing the output
-#   The other pipelines in this repository commit their CSVs, because their
-#   sources are open data. A KOF collection may hold non-public series, which
-#   KOF does not license for redistribution, and this repository is PUBLIC.
-#   kof/.gitignore therefore keeps the three CSVs out of git until it has been
-#   confirmed which series may be published (see the issue).
+#   Verified 2026-10-25: on the series both can read, the public values differ
+#   from the private ones only by the newer month and the seasonal-adjustment
+#   revision it brings (<= 2.2 points), as they should.
+#
+# Redistribution
+#   kof/public/ is gitignored too, until KOF's terms for republishing public
+#   series in this public repository are confirmed (see the issue).
 #
 # Usage
-#   Rscript kof/acquire_kof.R
-#   Rscript kof/acquire_kof.R <output_dir>
-#   Rscript kof/acquire_kof.R <output_dir> <valid_on YYYY-MM-DD>
+#   Rscript kof/acquire_kof.R [--private] [<output_dir>] [<valid_on YYYY-MM-DD>]
 #
-# The third form reads the vintage valid on a past date instead of the latest,
-# which is how to rebuild what was known at that date.
+# valid_on reads the vintage valid on a past date instead of the latest, which
+# is how to rebuild what was known at that date.
 #
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -52,18 +57,18 @@
 # SETTINGS ----------------------------------------------------------------
 
 collection <- "mfbdfm"
-owner      <- "kphilipp"
 locale     <- "en"
+owners <- c(public  = "0945fec6-0e5a-4490-9e8c-ed38d1d73040",   # open account
+            private = "kphilipp")
 
-# The CSVs land next to this script; see kof/.gitignore before committing them.
-# Resolved from the script's own path, not the working directory: the first
-# real run (2026-10-25) was started from inside kof/, and a relative "kof"
-# then wrote to kof/kof/.
+# Output lands next to this script, in public/ or private/. Resolved from the
+# script's own path, not the working directory: the first real run
+# (2026-10-25) was started from inside kof/, and a relative "kof" then wrote to
+# kof/kof/.
 script_dir <- local({
   f <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE))
   if (length(f)) dirname(normalizePath(f[1], mustWork = FALSE)) else "kof"
 })
-default_out_dir <- script_dir
 
 
 # HELPERS -----------------------------------------------------------------
@@ -164,17 +169,42 @@ flatten_metadata <- function(md) {
 
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
-#' Download the collection and return the three tables
-acquire_kof <- function(valid_on = Sys.Date()) {
-  message("Reading collection '", collection, "' (owner ", owner, "), valid on ",
-          format(valid_on))
-  tsl <- tsdbapi::read_collection_ts(collection, owner = owner, valid_on = valid_on)
+#' Download the collection and return the tables
+#'
+#' In public mode, series the open account may not read are skipped
+#' (ignore_missing) rather than failing the run, but never silently: a strict
+#' read first counts them from the API's own refusal ("not allowed to access 4
+#' of 9"), and the count is returned and reported.
+acquire_kof <- function(mode = c("public", "private"), valid_on = Sys.Date()) {
+  mode <- match.arg(mode)
+  owner <- owners[[mode]]
+  if (mode == "public") tsdbapi::set_config(access_type = "public")
+  message("Reading collection '", collection, "' (", mode, ", owner ", owner,
+          "), valid on ", format(valid_on))
+
+  skipped <- c(n = 0L, of = NA_integer_)
+  lenient <- mode == "public"
+  tsl <- tryCatch(
+    tsdbapi::read_collection_ts(collection, owner = owner, valid_on = valid_on),
+    error = function(e) {
+      hit <- regmatches(conditionMessage(e),
+                        regexec("not allowed to access ([0-9]+) of ([0-9]+)", conditionMessage(e)))[[1]]
+      if (!lenient || length(hit) < 3) stop(e)
+      skipped[] <<- as.integer(hit[2:3])
+      tsdbapi::read_collection_ts(collection, owner = owner, valid_on = valid_on,
+                                  ignore_missing = TRUE)
+    })
   if (!length(tsl)) stop("the collection returned no series", call. = FALSE)
+  if (skipped[["n"]] > 0) {
+    message("  ", skipped[["n"]], " of ", skipped[["of"]], " series are not public ",
+            "and were skipped; run with --private for all of them")
+  }
 
   obs <- do.call(rbind, Map(series_to_long, tsl, names(tsl)))
   rownames(obs) <- NULL
 
-  md <- tsdbapi::read_collection_ts_metadata(collection, owner = owner, locale = locale)
+  md <- tsdbapi::read_collection_ts_metadata(collection, owner = owner, locale = locale,
+                                             ignore_missing = lenient)
   meta <- flatten_metadata(md)
   missing_meta <- setdiff(names(tsl), meta$key)
   if (length(missing_meta)) {
@@ -182,17 +212,23 @@ acquire_kof <- function(valid_on = Sys.Date()) {
             paste(utils::head(missing_meta, 5), collapse = ", "), call. = FALSE)
   }
 
-  # Which vintage each series is, and when it was released. Not essential to
-  # the data, so a failure here is reported and skipped, not fatal.
+  # Which vintage each series is, and when it is (or was) released. Not
+  # essential to the data, so a failure here is reported and skipped.
   rel <- tryCatch(
     flatten_metadata(tsdbapi::read_collection_ts_release(collection, owner = owner,
-                                                         valid_on = valid_on)),
+                                                         valid_on = valid_on,
+                                                         ignore_missing = lenient)),
     error = function(e) {
       warning("release information not read: ", conditionMessage(e), call. = FALSE)
       NULL
     })
+  if (!is.null(rel) && "release_time" %in% names(rel)) {
+    rt <- as.POSIXct(sub("Z$", "", sub("T", " ", rel$release_time)), tz = "UTC")
+    rel$released <- !is.na(rt) & rt <= Sys.time()
+  }
 
-  list(observations = obs, metadata = meta, release = rel)
+  list(observations = obs, metadata = meta, release = rel, mode = mode,
+       skipped = skipped)
 }
 
 
@@ -206,18 +242,21 @@ if (sys.nframe() == 0L) {
         else paste0(': install.packages("', p, '")'), call. = FALSE)
     }
   }
-  if (!interactive() && !nzchar(Sys.getenv("TSDBAPI_API_KEY"))) {
-    stop("TSDBAPI_API_KEY is not set. A non-interactive run cannot log in to KOF; ",
-         "create a key once with tsdbapi::create_user_api_key() in an interactive ",
-         "session and put TSDBAPI_API_KEY=<key> in ~/.Renviron. Never commit it.",
-         call. = FALSE)
-  }
-
   args <- commandArgs(trailingOnly = TRUE)
-  out_dir  <- if (length(args) >= 1L) args[[1L]] else default_out_dir
+  mode <- if ("--private" %in% args) "private" else "public"
+  args <- args[!grepl("^--", args)]
+  out_dir  <- if (length(args) >= 1L) args[[1L]] else file.path(script_dir, mode)
   valid_on <- if (length(args) >= 2L) as.Date(args[[2L]]) else Sys.Date()
 
-  res <- acquire_kof(valid_on = valid_on)
+  if (mode == "private" && !interactive() && !nzchar(Sys.getenv("TSDBAPI_API_KEY"))) {
+    stop("--private needs KOF credentials, and TSDBAPI_API_KEY is not set. A ",
+         "non-interactive run cannot log in; create a key once with ",
+         "tsdbapi::create_user_api_key() in an interactive session and put ",
+         "TSDBAPI_API_KEY=<key> in ~/.Renviron. Never commit it. ",
+         "(The default public mode needs no key.)", call. = FALSE)
+  }
+
+  res <- acquire_kof(mode = mode, valid_on = valid_on)
 
   dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
   utils::write.csv(res$observations, file.path(out_dir, "kof_series.csv"),
@@ -234,4 +273,11 @@ if (sys.nframe() == 0L) {
   message("Wrote ", nrow(obs), " observations of ", length(span), " series to ",
           file.path(out_dir, "kof_series.csv"))
   message(paste0("  ", names(span), ": ", span, collapse = "\n"))
+
+  rel <- res$release
+  if (!is.null(rel) && "released" %in% names(rel) && any(!rel$released)) {
+    warning(sum(!rel$released), " series hold PRE-RELEASE data (first release ",
+            min(rel$release_time[!rel$released]), "). Do not publish this output ",
+            "before then.", call. = FALSE)
+  }
 }

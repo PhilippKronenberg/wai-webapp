@@ -1,13 +1,17 @@
-# The KOF collection may contain series KOF does not license for
-# redistribution, and this repository is public. Keep the downloaded data out
-# of git until it is confirmed which series may be published; then remove the
-# lines for the files that may (see kof/README.md and the issue).
-kof_series.csv
-kof_metadata.csv
-kof_release.csv
+# private/: read as a KOF user, it holds non-public series and pre-release
+# vintages. Never commit it, whatever is decided about public/.
+private/
 
-# An R session started in this folder (as the first real run was) writes its
-# command history here, and a session that set up KOF credentials would carry
-# them in it. Never publish it.
+# public/: released public series only. Kept out of git until KOF's terms for
+# republishing public series in this public repository are confirmed; then
+# delete this line (see kof/README.md and the issue).
+public/
+
+# Stray output of the first run, which was started inside kof/ before the
+# output path was resolved from the script's location.
+kof/
+
+# An R session started in this folder writes its command history here, and a
+# session that set up KOF credentials would carry them in it. Never publish it.
 .Rhistory
 .RData
