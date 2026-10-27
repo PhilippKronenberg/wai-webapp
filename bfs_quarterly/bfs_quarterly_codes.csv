@@ -1,0 +1,125 @@
+dimension,code,label
+adjustment,brut,Unbereinigt
+adjustment,ca,Kalenderbereinigt
+adjustment,sa,Saisonbereinigt
+adjustment,tr,Trend
+branch,G,G Handel
+branch,G45,45 Handel und Reparatur von Motorfahrzeugen
+branch,G46,46 Grosshandel
+branch,G46_X_46712,"46 (ohne 4671, 4672): Grosshandel ohne Rohstoffhandel"
+branch,G463,"463: Grosshandel mit Nahrungsmitteln, Getränken, Tabakwaren"
+branch,G4645,"464, 465: Grosshandel mit Gebrauchs- und Verbrauchsgütern bzw. mit Geräten der Informations- und Kommunikationstechnik"
+branch,G46712,"4671, 4672: Rohstoffhandel"
+branch,G4699,Übriger Grosshandel ohne Rohstoffhandel
+branch,G47,47 Detailhandel
+branch,G47_FOOD,"4711, 472: Detailhandel mit Nahrungsmitteln, Getränken, Tabakwaren"
+branch,G47_NFOOD,"4719, 474-479: Detailhandel mit Nicht-Nahrungsmitteln (ohne Tankstellen)"
+branch,G47_X_473,47 (ohne 473): Total Detailhandel ohne Tankstellen
+branch,G473,473: Detailhandel mit Tankstellen
+difficulty,1,Personal leicht gefunden
+difficulty,2,Personal schwer gefunden
+difficulty,3,Personal nicht gefunden
+difficulty,4,Personal nicht gesucht/Suchprozess noch nicht abgeschlossen/weiss nicht
+difficulty,5,Keine Antwort
+division,10-12,10-12 Herstellung von Nahrungsmitteln und Tabakerz.
+division,10-33,10-33 Verarbeitendes Gewerbe/Herstellung von Waren
+division,13-15,13-15 Herstellung von Textilien und Bekleidung
+division,16-18,"16-18 Herstellung von Holzwaren, Papier und Druckerz."
+division,19-20,"19-20 Kokerei, Mineralölverarb. u. Herstel. von chem. Erz."
+division,21,21 Herstellung von pharmazeutischen Erzeugnissen
+division,22-23,22-23 Herstellung von Gummi- und Kunststoffwaren
+division,24-25,24-25 Herstellung von Metallerzeugnissen
+division,26,26 Herstellung von Datenverarbeitungsgeräten und Uhren
+division,27,27 Herstellung von elektrischen Ausrüstungen
+division,28,28 Maschinenbau
+division,29-30,29-30 Fahrzeugbau
+division,31-33,"31-33 Sonstige Herstellung von Waren, Rep. und Inst."
+division,35,35 Energieversorgung
+division,36-39,"36-39 Wasserversorgung, Beseitigung von Umweltverschmutz."
+division,41-42,41-42 Hoch- und Tiefbau
+division,41-43,41-43 Baugewerbe/Bau
+division,43,43 Sonstiges Ausbaugewerbe
+division,45,45 Handel und Reparatur von Motorfahrzeugen
+division,45-47,"45-47 Handel, Instandhaltung und Rep. von Kraftfahrzeugen"
+division,45-96,45-96 SEKTOR III
+division,46,46 Grosshandel
+division,47,47 Detailhandel
+division,49,49 Landverkehr und Transport in Rohrfernleitungen
+division,49-53,49-53 Verkehr und Lagerei
+division,5-43,5-43 SEKTOR II
+division,5-9,5-9 Bergbau und Gewinnung von Steinen und Erden
+division,5-96,5-96 Total
+division,50-51,50-51 Schifffahrt und Luftfahrt
+division,52,52 Lagerei sowie Erbring. v. sonst. Dienstl. für den Verk.
+division,53,"53 Post-, Kurier- und Expressdienste"
+division,55,55 Beherbergung
+division,55-56,55-56 Gastgewerbe/Beherbergung und Gastronomie
+division,56,56 Gastronomie
+division,58-60,"58-60 Verlagswesen, audiovisuelle Medien und Rundfunk"
+division,58-63,58-63 Information und Kommunikation
+division,61,61 Telekommunikation
+division,62-63,62-63 Informationstechnologische und Informationsdienstl.
+division,64,64 Erbringung von Finanzdienstleistungen
+division,64-66,64-66 Erbringung von Finanz- und Versicherungsdienstl.
+division,65,65 Versicherungen
+division,66,66 Mit Finanz- u. Versicherungsdienstl. verb. Tätigk.
+division,68,68 Grundstücks- und Wohnungswesen
+division,68-75,"68-75 Grundstk- u. Wohn.wesen, freiberufl., wiss., techn. Dienstl."
+division,69,"69 Rechts- und Steuerberatung, Wirtschaftsprüfung"
+division,69-75,"69-75 Erbringung von freiberufl., wissen. u. techn. Dienstl."
+division,70,"70 Unternehmensverwaltung u. -führung, Unternehmensber."
+division,71,71 Architektur- und Ingenieurbüros
+division,72,72 Forschung und Entwicklung
+division,73-75,"73-75 Sonstige freiberufl., wissen. und techn. Dienstl."
+division,77-82,77-82 Erbringung von sonstigen wirtschaftlichen Dienstl.
+division,77+79-82,77+79-82 Erbringung von sonst. wirtschaftlichen Dienst. (ohne 78)
+division,78,78 Vermittlung und Überlassung von Arbeitskräften
+division,84,84 Öffentliche Verwaltung
+division,85,85 Erziehung und Unterricht
+division,86,86 Gesundheitswesen
+division,86-88,86-88 Gesundheits- und Sozialwesen
+division,87,87 Heime (ohne Erholungs- und Ferienheime)
+division,88,88 Sozialwesen (ohne Heime)
+division,90-93,"90-93 Kunst, Unterhaltung und Erholung"
+division,90-96,"90-96 Kunst, Unterhaltung u. Erholung, sonstige Dienstl."
+division,94-96,94-96 Erbringung von sonstigen Dienstleistungen
+education,1,Hochschulabsolventen
+education,2,Höhere Berufsbildung
+education,3,Berufslehre
+education,4,Obligatorische Schulbildung
+employment_level,1,Vollzeit
+employment_level,2,Teilzeit
+employment_level,2.1,Teilzeit I
+employment_level,2.2,Teilzeit II
+employment_level,2.3,Teilzeit III
+employment_level,3,"Total, saisonbereinigt"
+employment_level,4,Vollzeitäquivalente
+employment_level,4.1,"Vollzeitäquivalente, saisonbereinigt"
+employment_level,4.2,"Vollzeitäquivalente, saisonbereinigt"
+employment_level,TOT,Beschäftigungsgrad - Total
+measure,1,Offene Stellen - Total
+measure,2,Index (2. Quartal 2015 = 100)
+measure,3,Quote (in %)
+measure,ind,Indizes
+measure,var,Veränderungen
+outlook,1,Beibehalten des Personalbestands
+outlook,2,Erhöhung des Personalbestands
+outlook,3,Reduktion des Personalbestands
+outlook,4,Keine Antwort
+outlook,5,Indikator der Beschäftigungsaussichten
+region,0,Schweiz
+region,1,Region lémanique
+region,2,Espace Mittelland
+region,3,Nordwestschweiz
+region,4,Zürich
+region,5,Ostschweiz
+region,6,Zentralschweiz
+region,7,Ticino
+sector,2,Sektor 2
+sector,3,Sektor 3
+sector,TOT,Sektoren 2-3
+turnover,uexp,Auslandumsatz
+turnover,uinl,Inlandumsatz
+turnover,utot,Gesamtumsatz
+weighting,1,Gewichtung nach Anzahl der Betriebe
+weighting,2,Gewichtung nach Anzahl der Beschäftigten
