@@ -1,0 +1,4 @@
+# The raw PxWeb responses `--cache` keeps, so the parse can be re-run without
+# fetching again. They are the input to the committed CSVs, not a result worth
+# keeping, and the API serves them to anyone.
+raw/
