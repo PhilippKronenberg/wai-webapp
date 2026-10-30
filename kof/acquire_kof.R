@@ -29,10 +29,12 @@
 #   private           The copy kept by `kphilipp`, read as that user: every
 #   (--private)       series, and vintages that are not yet released (on
 #                     2026-10-25 it already held October, due for release on
-#                     4 Nov). That is what makes it worth having for
-#                     nowcasting, and also why its output must NEVER be
-#                     published: it is written to kof/private/, which git
-#                     ignores, and the run warns when it holds pre-release data.
+#                     4 Nov). That output must NEVER be published or feed the
+#                     model: it is written to kof/private/, which git ignores,
+#                     and the run warns when it holds pre-release data. Each
+#                     run also writes kof_series_released.csv, with every such
+#                     vintage replaced by the latest released one
+#                     (released_vintages()); the dataset build uses only that.
 #                     Needs a login (interactive) or TSDBAPI_API_KEY (created
 #                     once with tsdbapi::create_user_api_key(); keep it in
 #                     ~/.Renviron, never commit it).
@@ -248,12 +250,77 @@ acquire_kof <- function(mode = c("public", "private"), valid_on = Sys.Date()) {
       NULL
     })
   if (!is.null(rel) && "release_time" %in% names(rel)) {
-    rt <- as.POSIXct(sub("Z$", "", sub("T", " ", rel$release_time)), tz = "UTC")
-    rel$released <- !is.na(rt) & rt <= Sys.time()
+    rel$released <- is_released(rel$release_time)
   }
 
+  rv <- released_vintages(obs, rel, valid_on)
   list(observations = obs, metadata = meta, release = rel, mode = mode,
-       skipped = skipped)
+       skipped = skipped, observations_released = rv$observations, release_used = rv$used)
+}
+
+#' Has a release time passed? (ISO time from the API; missing = no release time)
+is_released <- function(release_time, now = Sys.time()) {
+  rt <- as.POSIXct(sub("Z$", "", sub("T", " ", release_time)), tz = "UTC")
+  !is.na(rt) & rt <= now
+}
+
+#' Replace every pre-release vintage with the latest RELEASED one
+#'
+#' The private account can read vintages KOF has not released yet (2026-10:
+#' October's survey results, released on 2026-11-04). Such a vintage may
+#' revise past months as well as add the new one (the seasonal adjustment is
+#' re-estimated), so cutting off its last month is not enough: the whole
+#' vintage is replaced. For every series whose current vintage is not
+#' released, the vintage valid on the day before that vintage's date is read;
+#' if it is not released either, the step is repeated (at most `max_steps`).
+#' A series with no release information is kept as it is and reported.
+#' Returns the observations to use and, per series, the vintage used.
+released_vintages <- function(obs, rel, valid_on = Sys.Date(), max_steps = 12L) {
+  keys <- unique(obs$key)
+  used <- data.frame(key = keys, vintage_date = NA_character_, release_time = NA_character_,
+                     released = NA, replaced = FALSE, stringsAsFactors = FALSE)
+  if (is.null(rel) || !"release_time" %in% names(rel)) {
+    warning("no release information: cannot check for pre-release data", call. = FALSE)
+    return(list(observations = obs, used = used))
+  }
+  out <- obs
+  for (k in keys) {
+    r <- rel[rel$key == k, , drop = FALSE]
+    i <- match(k, used$key)
+    if (!nrow(r) || is.na(r$release_time[1])) {
+      warning(k, ": no release time; kept as read", call. = FALSE)
+      next
+    }
+    used[i, c("vintage_date", "release_time")] <- c(r$vintage_date[1], r$release_time[1])
+    used$released[i] <- is_released(r$release_time[1])
+    if (used$released[i]) next
+    day <- as.Date(r$vintage_date[1]) - 1
+    for (step in seq_len(max_steps)) {
+      r2 <- tsdbapi::read_ts_release(k, valid_on = day)
+      if (is_released(r2$release_time[1])) {
+        x <- tsdbapi::read_ts(k, valid_on = day)[[k]]
+        out <- rbind(out[out$key != k, , drop = FALSE], series_to_long(x, k))
+        used[i, c("vintage_date", "release_time")] <- c(r2$vintage_date[1], r2$release_time[1])
+        used$released[i] <- TRUE
+        used$replaced[i] <- TRUE
+        break
+      }
+      day <- as.Date(r2$vintage_date[1]) - 1
+    }
+    if (!isTRUE(used$released[i])) {
+      stop(k, ": no released vintage found within ", max_steps, " steps back", call. = FALSE)
+    }
+  }
+  out <- out[order(out$key, out$date), , drop = FALSE]
+  rownames(out) <- NULL
+  if (any(used$replaced)) {
+    message("  pre-release vintages replaced by the latest released one for ", sum(used$replaced),
+            " series: ", paste(sprintf("%s (vintage %s, released %s)", used$key[used$replaced],
+                                       used$vintage_date[used$replaced],
+                                       substr(used$release_time[used$replaced], 1, 10)),
+                               collapse = "; "))
+  }
+  list(observations = out, used = used)
 }
 
 
@@ -292,6 +359,11 @@ if (sys.nframe() == 0L) {
     utils::write.csv(res$release, file.path(out_dir, "kof_release.csv"),
                      row.names = FALSE, na = "")
   }
+  # What the model dataset may use: released vintages only (see released_vintages()).
+  utils::write.csv(res$observations_released, file.path(out_dir, "kof_series_released.csv"),
+                   row.names = FALSE, na = "")
+  utils::write.csv(res$release_used, file.path(out_dir, "kof_release_used.csv"),
+                   row.names = FALSE, na = "")
 
   obs <- res$observations
   span <- tapply(obs$date, obs$key, function(d) paste(format(min(d)), "to", format(max(d))))
