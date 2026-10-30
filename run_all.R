@@ -29,8 +29,9 @@
 #   Rscript run_all.R --no-pipelines           steps 2 and 3 only
 #   Rscript run_all.R --gdp-vintage=2026-09-01 latest GDP vintage to include (default: today)
 #
-# Private KOF series: run kof/acquire_kof_loggedin.R interactively first;
-# the assembler uses kof/private/ when it exists, else kof/public/.
+# KOF: with TSDBAPI_API_KEY set the pipeline reads all series (--private),
+# without it the public ones. kof/acquire_kof_loggedin.R does the private read
+# interactively. The assembler takes, per series, the newest released vintage.
 #
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -67,7 +68,7 @@ pipelines <- list(            # folder, interpreter, script
 
 log_dir <- file.path("dataset", "out", "logs")
 dir.create(log_dir, recursive = TRUE, showWarnings = FALSE)
-run <- function(interp, script, log, env = character()) {
+run <- function(interp, script, log, env = character(), script_args = character()) {
   cmd <- if (interp == "node") "node" else rscript
   t0 <- Sys.time()
   # system2(env = ) is not supported on Windows; set the variables for the child instead.
@@ -79,7 +80,7 @@ run <- function(interp, script, log, env = character()) {
     on.exit(for (n in names(old)) if (is.na(old[[n]])) Sys.unsetenv(n) else do.call(Sys.setenv, stats::setNames(list(old[[n]]), n)),
             add = TRUE)
   }
-  st <- system2(cmd, shQuote(script), stdout = log, stderr = log)
+  st <- system2(cmd, c(shQuote(script), script_args), stdout = log, stderr = log)
   list(ok = identical(as.integer(st), 0L), secs = round(as.numeric(difftime(Sys.time(), t0, units = "secs"))))
 }
 status <- data.frame(step = character(), ok = logical(), secs = numeric(), log = character())
@@ -90,7 +91,19 @@ if (run_pipelines) {
   for (pl in pipelines) {
     if (pl[1] %in% skip) { message(sprintf("   %-28s skipped", pl[1])); next }
     log <- file.path(log_dir, paste0(pl[1], ".log"))
-    r <- run(pl[2], pl[3], log)
+    # KOF: all series with an API key; without one, or if that read fails, the
+    # public ones. The assembler takes released vintages only, either way.
+    if (pl[1] == "kof" && nzchar(Sys.getenv("TSDBAPI_API_KEY"))) {
+      r <- run(pl[2], pl[3], log, script_args = "--private")
+      if (!r$ok) {
+        message(sprintf("   %-28s private read FAILED -> see %s; reading the public series", pl[1], log))
+        log <- file.path(log_dir, "kof_public.log")
+        r <- run(pl[2], pl[3], log)
+      }
+    } else {
+      if (pl[1] == "kof") message("   kof: TSDBAPI_API_KEY not set; reading the public series only")
+      r <- run(pl[2], pl[3], log)
+    }
     status[nrow(status) + 1, ] <- list(pl[1], r$ok, r$secs, log)
     message(sprintf("   %-28s %s (%ds)%s", pl[1], if (r$ok) "ok" else "FAILED", r$secs,
                     if (r$ok) "" else paste0(" -> see ", log)))
