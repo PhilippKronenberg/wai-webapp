@@ -65,12 +65,13 @@ Build of 2026-10-30 (public KOF only): **37 same, 6 similar, 3 different,
   revise the seasonal adjustment).
 
 **KOF: released vintages only.** The dataset never contains pre-release KOF
-data. The assembler reads `kof_series_released.csv` (see `kof/README.md`), from
-`kof/private/` when that file exists, and from `kof/public/` for any series
-still missing. A private download without the released-only file is not used.
-The four manufacturing sub-sector series are not public. Until
-`kof/acquire_kof_loggedin.R` has been rerun, they come from the old bundle and
-end in 2026-03 (the manifest marks them `FALLBACK`).
+data. The assembler reads `kof_series_released.csv` (see `kof/README.md`) from
+`kof/private/` and `kof/public/`, and takes, per series, the newest released
+vintage, private on a tie. A private download without the released-only file is
+not used. The four manufacturing sub-sector series are not public: they need a
+private read (`TSDBAPI_API_KEY`, or `kof/acquire_kof_loggedin.R`). Without any,
+they come from the old bundle and end in 2026-03 (the manifest marks them
+`FALLBACK`). `publish/check_kof_released.R` tests this.
 
 ## Test run
 

@@ -106,6 +106,7 @@ read_released_kof <- function(mode) {
   x <- utils::read.csv(f, stringsAsFactors = FALSE)
   x <- x[x$key %in% ok, ]
   x$source <- paste0("kof/", mode)
+  x$vintage <- used$vintage_date[match(x$key, used$key)]
   x
 }
 kof <- read_released_kof("private")
@@ -114,7 +115,11 @@ if (is.null(kof) && file.exists(p("kof", "private", "kof_series.csv"))) {
 }
 kof_pub <- read_released_kof("public")
 if (is.null(kof) && is.null(kof_pub)) stop("no released KOF data; run kof/acquire_kof.R", call. = FALSE)
-kof <- rbind(kof, kof_pub[!kof_pub$key %in% kof$key, ])
+# Per series the newest released vintage, private on a tie: a private download
+# that has not been refreshed must not hold back the public one.
+kof <- do.call(rbind, lapply(split(rbind(kof, kof_pub), rbind(kof, kof_pub)$key), function(x) {
+  x[x$source == x$source[order(x$vintage, x$source == "kof/private", decreasing = TRUE)[1]], ]
+}))
 kof_keys <- grep("^ch\\.kof\\.", names(e$ts_pg), value = TRUE)
 for (k in kof_keys) {
   x <- kof[kof$key == k, ]
