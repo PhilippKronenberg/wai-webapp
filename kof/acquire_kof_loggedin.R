@@ -14,8 +14,9 @@
 # Everything else is acquire_kof.R itself: this file sources it and calls the
 # same acquire_kof(mode = "private"), so the two cannot drift apart.
 #
-# Output: kof/private/ (gitignored). It can hold PRE-RELEASE vintages; never
-# publish it. The run warns when it does.
+# Output: kof/private/ (gitignored). kof_series.csv can hold PRE-RELEASE
+# vintages; never publish it. The run warns when it does. The dataset build
+# reads only kof_series_released.csv, which holds released vintages.
 #
 # Needs an interactive session: the OAuth sign-in cannot run under Rscript.
 # For unattended runs use `Rscript kof/acquire_kof.R --private` with
@@ -67,6 +68,9 @@ utils::write.csv(res$metadata, file.path(out_dir, "kof_metadata.csv"), row.names
 if (!is.null(res$release)) {
   utils::write.csv(res$release, file.path(out_dir, "kof_release.csv"), row.names = FALSE, na = "")
 }
+# What the model dataset may use: released vintages only (see released_vintages()).
+utils::write.csv(res$observations_released, file.path(out_dir, "kof_series_released.csv"), row.names = FALSE, na = "")
+utils::write.csv(res$release_used, file.path(out_dir, "kof_release_used.csv"), row.names = FALSE, na = "")
 
 obs <- res$observations
 span <- tapply(obs$date, obs$key, function(d) paste(format(min(d)), "to", format(max(d))))

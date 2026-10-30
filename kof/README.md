@@ -25,12 +25,22 @@ The four manufacturing sub-sector series (`ch.kof.inu.ng08.fx.sector_mig.*`:
 capital goods, durable and non-durable consumer goods, intermediate goods) are
 not public. Public mode skips them, and says so in the log.
 
-**Private output can hold embargoed data.** On 2026-10-25 the private
-collection already held the October values, scheduled for release on
-2026-11-04. That is what makes it useful for nowcasting, a month ahead of
-public, and also why it must not be published before release.
-`kof_release.csv` carries a `released` column, and a run warns when any series
-is pre-release.
+**Private output can hold embargoed data, and the model does not use it.** On
+2026-10-25 the private collection already held the October values, scheduled
+for release on 2026-11-04. `kof_release.csv` carries a `released` column, and a
+run warns when any series is pre-release.
+
+**Released vintages only.** Every run also writes `kof_series_released.csv`
+and `kof_release_used.csv`. For a series whose current vintage is not released
+(`release_time` still ahead), the whole vintage is replaced by the latest
+released one: the vintage valid on the day before its `vintage_date` is read,
+stepping further back if that one is not released either. Cutting only the
+newest month would not do, because a vintage can also revise past months (KOF
+re-estimates the seasonal adjustment). If no released vintage is found, the
+run stops. `dataset/assemble_dataset.R` reads **only**
+`kof_series_released.csv`, and only series recorded there as released with a
+release time that has passed. Without that file it does not use the download.
+`kof_series.csv` remains the raw read and must not feed the model.
 
 Verified 2026-10-25: on the 5 shared series, public and private differ only by
 the newer month and the seasonal-adjustment revision it brings (at most 2.2
@@ -44,7 +54,9 @@ points).
 | `acquire_kof_loggedin.R` | the private mode with your own KOF login (OAuth in the browser) instead of an API key; interactive only |
 | `<mode>/kof_series.csv` | `key, date, value, frequency`, one row per observation; `date` is the first day of the period |
 | `<mode>/kof_metadata.csv` | one row per series, nested metadata flattened to `parent.child` columns |
-| `<mode>/kof_release.csv` | vintage date, release time and `released` per series |
+| `<mode>/kof_release.csv` | vintage date, release time and `released` per series, for the current vintage |
+| `<mode>/kof_series_released.csv` | as `kof_series.csv`, released vintages only: **what the model dataset uses** |
+| `<mode>/kof_release_used.csv` | per series, the vintage in `kof_series_released.csv`, its release time, `released`, and `replaced` (TRUE if the current vintage was pre-release) |
 
 **Both output folders are gitignored.** `private/` must stay that way.
 `public/` is held back only until KOF's terms for republishing public series

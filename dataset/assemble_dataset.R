@@ -90,20 +90,43 @@ message("Assembling ", out)
 # 1. postgres_data_new.rda: KOF (9) and trade (2), monthly ts in `ts_pg`
 e <- new.env(); load(file.path(old, "postgres_data_new.Rda"), envir = e)
 ts_pg <- list()
-kof_file <- if (file.exists(p("kof", "private", "kof_series.csv"))) p("kof", "private", "kof_series.csv") else p("kof", "public", "kof_series.csv")
-kof <- utils::read.csv(need(kof_file), stringsAsFactors = FALSE)
+# Released vintages only: kof_series_released.csv, never kof_series.csv, which
+# can hold pre-release data. Only series whose vintage is recorded as released
+# in kof_release_used.csv, with a release time that has passed, are taken. A
+# private download without these files is not used at all.
+read_released_kof <- function(mode) {
+  f <- p("kof", mode, "kof_series_released.csv"); u <- p("kof", mode, "kof_release_used.csv")
+  if (!file.exists(f) || !file.exists(u)) return(NULL)
+  used <- utils::read.csv(u, stringsAsFactors = FALSE)
+  rt <- as.POSIXct(sub("Z$", "", sub("T", " ", used$release_time)), tz = "UTC")
+  ok <- used$key[used$released %in% TRUE & !is.na(rt) & rt <= Sys.time()]
+  if (length(setdiff(used$key, ok))) {
+    message("  KOF ", mode, ": not verified as released, not used: ", paste(setdiff(used$key, ok), collapse = ", "))
+  }
+  x <- utils::read.csv(f, stringsAsFactors = FALSE)
+  x <- x[x$key %in% ok, ]
+  x$source <- paste0("kof/", mode)
+  x
+}
+kof <- read_released_kof("private")
+if (is.null(kof) && file.exists(p("kof", "private", "kof_series.csv"))) {
+  message("  KOF private: no released-only file; rerun kof/acquire_kof_loggedin.R. Not using the private download.")
+}
+kof_pub <- read_released_kof("public")
+if (is.null(kof) && is.null(kof_pub)) stop("no released KOF data; run kof/acquire_kof.R", call. = FALSE)
+kof <- rbind(kof, kof_pub[!kof_pub$key %in% kof$key, ])
 kof_keys <- grep("^ch\\.kof\\.", names(e$ts_pg), value = TRUE)
 for (k in kof_keys) {
   x <- kof[kof$key == k, ]
   if (nrow(x)) {
     ts_pg[[k]] <- monthly_ts(x$date, x$value)
-    note(paste0("postgres_data_new.rda:", k), paste0("kof/", basename(dirname(kof_file))), "pipeline", x$date)
+    note(paste0("postgres_data_new.rda:", k), x$source[1], "pipeline", x$date, "released vintage")
   } else {
     ts_pg[[k]] <- e$ts_pg[[k]]
     tt <- stats::time(e$ts_pg[[k]])
     note(paste0("postgres_data_new.rda:", k), "wai_ind postgres_data_new.Rda", "FALLBACK",
          as.Date(sprintf("%d-%02d-01", floor(tt + 1e-6), round((tt - floor(tt + 1e-6)) * 12) + 1)),
-         "not readable with this KOF account; old values (run kof/acquire_kof_loggedin.R)")
+         "no released vintage available; old values (run kof/acquire_kof_loggedin.R)")
   }
 }
 tr <- utils::read.csv(need(p("bazg_trade", "bazg_trade_wai.csv")), stringsAsFactors = FALSE)
